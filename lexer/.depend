@@ -1,0 +1,22 @@
+ast.cmo :
+ast.cmx :
+lex.cmo : \
+    parser.cmi
+lex.cmx : \
+    parser.cmx
+loop.cmo : \
+    parser.cmi \
+    lex.cmo \
+    ast.cmo
+loop.cmx : \
+    parser.cmx \
+    lex.cmx \
+    ast.cmx
+parser.cmo : \
+    ast.cmo \
+    parser.cmi
+parser.cmx : \
+    ast.cmx \
+    parser.cmi
+parser.cmi : \
+    ast.cmo

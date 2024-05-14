@@ -1,0 +1,72 @@
+ast.cmo :
+ast.cmx :
+compile.cmo : \
+    vmBytecode.cmi \
+    ast.cmo \
+    compile.cmi
+compile.cmx : \
+    vmBytecode.cmi \
+    ast.cmx \
+    compile.cmi
+compile.cmi : \
+    vmBytecode.cmi \
+    ast.cmo
+lex.cmo : \
+    parser.cmi
+lex.cmx : \
+    parser.cmx
+mainCompile.cmo : \
+    printByteCode.cmi \
+    parser.cmi \
+    lex.cmo \
+    compile.cmi \
+    ast.cmo
+mainCompile.cmx : \
+    printByteCode.cmx \
+    parser.cmx \
+    lex.cmx \
+    compile.cmx \
+    ast.cmx
+mainRun.cmo : \
+    vmExec.cmo \
+    vmBytecode.cmi \
+    printByteCode.cmi \
+    compile.cmi
+mainRun.cmx : \
+    vmExec.cmx \
+    vmBytecode.cmi \
+    printByteCode.cmx \
+    compile.cmx
+mem.cmo : \
+    vmBytecode.cmi \
+    mem.cmi
+mem.cmx : \
+    vmBytecode.cmi \
+    mem.cmi
+mem.cmi : \
+    vmBytecode.cmi
+parser.cmo : \
+    ast.cmo \
+    parser.cmi
+parser.cmx : \
+    ast.cmx \
+    parser.cmi
+parser.cmi : \
+    ast.cmo
+printByteCode.cmo : \
+    vmBytecode.cmi \
+    printByteCode.cmi
+printByteCode.cmx : \
+    vmBytecode.cmi \
+    printByteCode.cmi
+printByteCode.cmi : \
+    vmBytecode.cmi
+vmBytecode.cmi :
+vmExec.cmo : \
+    vmBytecode.cmi \
+    printByteCode.cmi \
+    mem.cmi
+vmExec.cmx : \
+    vmBytecode.cmi \
+    printByteCode.cmx \
+    mem.cmx

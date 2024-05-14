@@ -1,0 +1,9 @@
+exemple de syntaxe
+
+main()
+begin
+print(2);
+end
+
+ctrl+d
+

@@ -1,0 +1,1 @@
+Le makefile est fait, il faut le tester, si ca marche pas, aller dans ../lexer pour retrouver la version orignial.
