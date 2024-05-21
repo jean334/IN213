@@ -33,10 +33,13 @@ let load_run_and_quit fname =
   | VmExec.Computation_success v ->
       Printf.printf "Computation success. Returned: %a\n%!"
         PrintByteCode.pp_value v ;
+        while true do () done;
       exit 0
   | VmExec.Computation_failure ->
       Printf.printf "Computation failure\n%!" ;
       exit 1
+
+
 ;;
 
 

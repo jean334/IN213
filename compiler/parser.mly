@@ -14,9 +14,10 @@ open Ast ;;
 %token FORCE
 %token WIN
 %token COLONEQUAL
+%token X Y WIDTH HEIGHT COLOR
 %token WHILE DO DONE BEGIN END RETURN VAR
 %token PLUS MINUS MULT DIV EQUALEQUAL GREATER SMALLER GREATEREQUAL SMALLEREQUAL
-%token LPAR RPAR SEMICOLON COMMA LBRACKET RBRACKET LBRACE RBRACE
+%token LPAR RPAR SEMICOLON COMMA LBRACKET RBRACKET LBRACE RBRACE DOT
 %token IF THEN ELSE ENDIF PRINT
 
 %left EQUALEQUAL GREATER SMALLER GREATEREQUAL SMALLEREQUAL
@@ -35,7 +36,14 @@ program:
 
 toplevel:
 | var_decl { Vardecl $1 }
+| win_decl {Win $1}
 | rect_decl { Rect $1 }
+| rect_move { RectMove $1 }
+| rect_change_x { RectChangeX $1 }
+| rect_change_y { RectChangeY $1 }
+| rect_change_width { RectChangeWidth $1 }
+| rect_change_height { RectChangeHeight $1 }
+| rect_change_color { RectChangeColor $1 }
 | circle_decl { Circle $1 }
 | line_decl { Line $1 }
 | fun_def { Fundef $1 }
@@ -46,11 +54,37 @@ toplevel:
 var_decl:
 | VAR IDENT SEMICOLON { ($2, Scalar) }
 | VAR IDENT LBRACKET expr RBRACKET SEMICOLON { ($2, (Array $4)) }
-;
-
 rect_decl:
 | RECT IDENT LPAR exprs_list RPAR SEMICOLON
     { { r_name = $2 ; r_params = $4 } }
+
+win_decl:
+| WIN IDENT LPAR exprs_list RPAR SEMICOLON
+    { { w_name = $2 ; w_params = $4 } }
+    
+rect_move:
+| IDENT LPAR exprs_list RPAR SEMICOLON
+    { { r_name = $1 ; r_params = $3 } }
+
+rect_change_x:
+    IDENT DOT X LPAR expr RPAR SEMICOLON
+    { { r_name = $1 ; r_params = $5 } }
+
+rect_change_y:
+    IDENT DOT Y LPAR expr RPAR SEMICOLON
+    { { r_name = $1 ; r_params = $5 } }
+
+rect_change_width:
+    IDENT DOT WIDTH LPAR expr RPAR SEMICOLON
+    { { r_name = $1 ; r_params = $5 } }
+
+rect_change_height:
+    IDENT DOT HEIGHT LPAR expr RPAR SEMICOLON
+    { { r_name = $1 ; r_params = $5 } }
+
+rect_change_color:
+    IDENT DOT COLOR LPAR expr RPAR SEMICOLON
+    { { r_name = $1 ; r_params = $5 } }
 
 circle_decl:
 | CIRCLE IDENT LPAR exprs_list RPAR SEMICOLON
@@ -102,8 +136,25 @@ instr:
     { ArrayWrite ($1, $3, $6) }
 | BEGIN instrs END
     { $2 }
+
+| var_decl
+    { Vardecl $1 }
+| win_decl
+    { Win $1 }
 | rect_decl
     { Rect $1 }
+| rect_move
+    { RectMove $1 }
+| rect_change_x
+    { RectChangeX $1 }
+| rect_change_y
+    { RectChangeY $1 }
+| rect_change_width
+    { RectChangeWidth $1 }
+| rect_change_height
+    { RectChangeHeight $1 }
+| rect_change_color
+    { RectChangeColor $1 }
 | circle_decl
     { Circle $1 }
 | line_decl

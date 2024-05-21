@@ -24,6 +24,11 @@ type token =
   | FORCE
   | WIN
   | COLONEQUAL
+  | X
+  | Y
+  | WIDTH
+  | HEIGHT
+  | COLOR
   | WHILE
   | DO
   | DONE
@@ -48,6 +53,7 @@ type token =
   | RBRACKET
   | LBRACE
   | RBRACE
+  | DOT
   | IF
   | THEN
   | ELSE

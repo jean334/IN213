@@ -1,8 +1,12 @@
+open Graphics ;;
+
+
+
 exception Computation_success of VmBytecode.vm_val ;;
 exception Computation_failure ;;
 
-(* Là où aller chercher le code des fonctions lors des appels.
-   Initialisé uen fosi pour toute lorsque le bytecode est chargé. *)
+(* Lï¿½ oï¿½ aller chercher le code des fonctions lors des appels.
+   Initialisï¿½ uen fosi pour toute lorsque le bytecode est chargï¿½. *)
 let all_funs = ref ([] : (string * VmBytecode.vm_code) list) ;;
 
 
@@ -32,7 +36,7 @@ let pp_state ppf state =
 
 
 (* Compute the next state of the machine from the current state. *)
-let next_state state =
+let rec next_state state =
   match (state.VmBytecode.register,
          state.VmBytecode.code,
          state.VmBytecode.stack) with
@@ -170,12 +174,13 @@ let next_state state =
         VmBytecode.code = c ;
         VmBytecode.stack = r :: s ;
         VmBytecode.env = state.VmBytecode.env }
-  | (_, (VmBytecode.VMI_Pop :: c), v :: s) ->
-      (* Pop from the stack. *)
-      { VmBytecode.register = v ;
-        VmBytecode.code = c ;
-        VmBytecode.stack = s ;
-        VmBytecode.env = state.VmBytecode.env }
+| (_, (VmBytecode.VMI_Pop :: c), v :: s) ->
+    (* Pop from the stack. *)
+    let new_state = { VmBytecode.register = v ;
+                      VmBytecode.code = c ;
+                      VmBytecode.stack = s ;
+                      VmBytecode.env = state.VmBytecode.env } in
+    new_state
   | (_, ((VmBytecode.VMI_Read n) :: c),
      s) ->
        (* Read identifier. *)
@@ -192,15 +197,15 @@ let next_state state =
          VmBytecode.env = state.VmBytecode.env }
   | ((VmBytecode.VMV_int bsize), (VmBytecode.VMI_Mkblock :: c),
      _) ->
-       (* Allocation dynamique. Prend la taille du bloc à allouer dans
-          le registre et met l'adresse allouée dans le registre. *)
+       (* Allocation dynamique. Prend la taille du bloc ï¿½ allouer dans
+          le registre et met l'adresse allouï¿½e dans le registre. *)
        let (addr, state') = Mem.new_block state bsize in
        { state' with
          VmBytecode.register = VmBytecode.VMV_addr addr ;
          VmBytecode.code = c }
   | ((VmBytecode.VMV_addr addr), (VMI_Envext :: c),
      s) ->
-       (* Extension de l'environnement. Prend l'adresse à lier dans le
+       (* Extension de l'environnement. Prend l'adresse ï¿½ lier dans le
           registe.*)
        { VmBytecode.register = state.VmBytecode.register ;
          VmBytecode.code = c ;
@@ -208,7 +213,7 @@ let next_state state =
          VmBytecode.env = addr :: state.VmBytecode.env }
   | (r, ((VmBytecode.VMI_Assign n) :: c),
      s) ->
-       (* Affectation d'une variable. Prend la valeur à affecter dans le
+       (* Affectation d'une variable. Prend la valeur ï¿½ affecter dans le
           registre. *)
        let addr =
          (try (List.nth state.VmBytecode.env n) with
@@ -222,14 +227,22 @@ let next_state state =
          VmBytecode.code = c ;
          VmBytecode.stack = s ;
          VmBytecode.env = state.VmBytecode.env }
-  | (r, (VmBytecode.VMI_Print :: c),
-     s) ->
-       (* Affichage. Prend la valeur à afficher dans le registre. *)
-       Printf.printf "%a" PrintByteCode.pp_value r ;
-       { VmBytecode.register = r ;
-         VmBytecode.code = c ;
-         VmBytecode.stack = s ;
-         VmBytecode.env = state.VmBytecode.env }
+| (r, (VmBytecode.VMI_Print :: c), s) ->
+    (* Affichage. Prend la valeur Ã  afficher dans le registre. *)
+    Printf.printf "valeur : %a " PrintByteCode.pp_value r ;
+    let stack_str = 
+        s 
+        |> List.map (fun v -> match v with
+                            | VmBytecode.VMV_int i -> string_of_int i
+                            | VmBytecode.VMV_addr a -> string_of_int a
+                            | _ -> "other")
+        |> String.concat ", " in
+    Printf.printf "stack: [%s]\n" stack_str;
+    { VmBytecode.register = r ;
+      VmBytecode.code = c ;
+      VmBytecode.stack = s ;
+      VmBytecode.env = state.VmBytecode.env }
+         
   | ((VmBytecode.VMV_bool true),
      ((VmBytecode.VMI_Loop (code_cond, code_body)) :: c),
      s) ->
@@ -261,7 +274,7 @@ let next_state state =
          VmBytecode.env = state.VmBytecode.env }
   | ((VmBytecode.VMV_int index), (VmBytecode.VMI_Indxread :: c),
      (VmBytecode.VMV_addr base_addr) :: s) ->
-       (* Lecture dans un tableau. L'indice où aller lire est dans
+       (* Lecture dans un tableau. L'indice oï¿½ aller lire est dans
           le registre. L'adresse de base du tableau est au sommet de la pile. *)
        if base_addr + index >=
            Mem.mem.VmBytecode.heap_base + Mem.mem.VmBytecode.size then
@@ -270,23 +283,24 @@ let next_state state =
          VmBytecode.code = c ;
          VmBytecode.stack = s ;
          VmBytecode.env = state.VmBytecode.env }
-  | ((VmBytecode.VMV_int index), (VmBytecode.VMI_Indxwrite :: c),
-     v :: (VmBytecode.VMV_addr base_addr) :: s) ->
-       (* Affectation dans une case de tableau. L'indice est dans le registre
-          et la valeur à affectée est prise au sommet de la pile et
-          l'adresse de base du tableau juste en dessous. *)
-       if base_addr + index >=
-          Mem.mem.VmBytecode.heap_base + Mem.mem.VmBytecode.size then
-         raise (Failure "Access out of memory") ;
-       Mem.mem.VmBytecode.data.(base_addr + index) <- v ;
-        { VmBytecode.register = state.VmBytecode.register ;
-          VmBytecode.code = c ;
-          VmBytecode.stack = s ;
-          VmBytecode.env = state.VmBytecode.env }
+| ((VmBytecode.VMV_int index), (VmBytecode.VMI_Indxwrite :: c),
+   v :: (VmBytecode.VMV_addr base_addr) :: s) ->
+    (* Affectation dans une case de tableau. L'indice est dans le registre
+       et la valeur Ã  affectÃ©e est prise au sommet de la pile et
+       l'adresse de base du tableau juste en dessous. *)
+    if base_addr + index >=
+       Mem.mem.VmBytecode.heap_base + Mem.mem.VmBytecode.size then
+      raise (Failure "Access out of memory") ;
+    Mem.mem.VmBytecode.data.(base_addr + index) <- v ;
+    let new_state = { VmBytecode.register = state.VmBytecode.register ;
+                      VmBytecode.code = c ;
+                      VmBytecode.stack = v :: (VmBytecode.VMV_addr base_addr) :: s ;
+                      VmBytecode.env = state.VmBytecode.env } in
+    new_state
   | (_, ((VmBytecode.VMI_Return) :: c),
      s) ->
-       (* Retour de fonction. On ignore tout le code restant à exécuter.
-          La VM ira cherher le code placé en attente sur la pile lors de
+       (* Retour de fonction. On ignore tout le code restant ï¿½ exï¿½cuter.
+          La VM ira cherher le code placï¿½ en attente sur la pile lors de
           l'appel de la fonction courante que l'on quitte.. *)
        { VmBytecode.register = state.VmBytecode.register ;
          VmBytecode.code = [] ;
@@ -310,6 +324,95 @@ let next_state state =
          VmBytecode.code = c ;
          VmBytecode.stack = s ;
          VmBytecode.env = e }
+
+  | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_Window) ::c), s) ->
+    let p1 = match Mem.mem.VmBytecode.data.(r) with
+      | VmBytecode.VMV_int i -> i
+      | _ -> failwith "Expected an integer" in
+    let p2 = match Mem.mem.VmBytecode.data.(r + 1) with
+      | VmBytecode.VMV_int i -> i
+      | _ -> failwith "Expected an integer" in
+      Graphics.open_graph (Printf.sprintf " %dx%d" p1 p2);
+      { VmBytecode.register = VmBytecode.VMV_addr r ;
+      VmBytecode.code = c ;
+      VmBytecode.stack = s ;
+      VmBytecode.env = state.VmBytecode.env }
+
+  | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_Rect) ::c), s) ->
+    Graphics.set_color blue ;
+    let p1 = match Mem.mem.VmBytecode.data.(r) with
+      | VmBytecode.VMV_int i -> i
+      | _ -> failwith "Expected an integer" in
+    let p2 = match Mem.mem.VmBytecode.data.(r + 1) with
+      | VmBytecode.VMV_int i -> i
+      | _ -> failwith "Expected an integer" in
+    let p3 = match Mem.mem.VmBytecode.data.(r + 2) with
+      | VmBytecode.VMV_int i -> i
+      | _ -> failwith "Expected an integer" in
+    let p4 = match Mem.mem.VmBytecode.data.(r + 3) with
+      | VmBytecode.VMV_int i -> i
+      | _ -> failwith "Expected an integer" in
+    let p5 = match Mem.mem.VmBytecode.data.(r + 4) with
+      | VmBytecode.VMV_int i -> i
+      | _ -> failwith "Expected an integer" in
+      Graphics.draw_rect p1 p2 p3 p4 ;
+      { VmBytecode.register = VmBytecode.VMV_addr r ;
+      VmBytecode.code = c ;
+      VmBytecode.stack = s ;
+      VmBytecode.env = state.VmBytecode.env }
+  
+  | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectMove) ::c), p1::p2::p3::p4::p5::s) ->
+      Mem.mem.VmBytecode.data.(r) <- p1;
+      Mem.mem.VmBytecode.data.(r + 1) <- p2;
+      Mem.mem.VmBytecode.data.(r + 2) <- p3;
+      Mem.mem.VmBytecode.data.(r + 3) <- p4;
+      Mem.mem.VmBytecode.data.(r + 4) <- p5;
+      Printf.printf "RectMove %a\n" PrintByteCode.pp_value p5;
+      { VmBytecode.register = VmBytecode.VMV_addr r ;
+      VmBytecode.code = c ;
+      VmBytecode.stack = s ;
+      VmBytecode.env = state.VmBytecode.env }
+
+    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeX) ::c), p1::s) ->
+        Mem.mem.VmBytecode.data.(r) <- p1;
+        Printf.printf "RectChangeX %a\n" PrintByteCode.pp_value p1;
+        { VmBytecode.register = VmBytecode.VMV_addr r ;
+        VmBytecode.code = c ;
+        VmBytecode.stack = s ;
+        VmBytecode.env = state.VmBytecode.env }
+
+    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeY) ::c), p1::s) ->
+        Mem.mem.VmBytecode.data.(r+1) <- p1;
+        Printf.printf "RectChangeY %a\n" PrintByteCode.pp_value p1;
+        { VmBytecode.register = VmBytecode.VMV_addr r ;
+        VmBytecode.code = c ;
+        VmBytecode.stack = s ;
+        VmBytecode.env = state.VmBytecode.env }
+
+    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeW) ::c), p1::s) ->
+        Mem.mem.VmBytecode.data.(r+2) <- p1;
+        Printf.printf "RectChangeW %a\n" PrintByteCode.pp_value p1;
+        { VmBytecode.register = VmBytecode.VMV_addr r ;
+        VmBytecode.code = c ;
+        VmBytecode.stack = s ;
+        VmBytecode.env = state.VmBytecode.env }
+
+    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeH) ::c), p1::s) ->
+        Mem.mem.VmBytecode.data.(r+3) <- p1;
+        Printf.printf "RectChangeH %a\n" PrintByteCode.pp_value p1;
+        { VmBytecode.register = VmBytecode.VMV_addr r ;
+        VmBytecode.code = c ;
+        VmBytecode.stack = s ;
+        VmBytecode.env = state.VmBytecode.env }
+
+    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeC) ::c), p1::s) ->
+        Graphics.set_color blue ;
+        Printf.printf "RectChangeC %a\n" PrintByteCode.pp_value p1;
+        { VmBytecode.register = VmBytecode.VMV_addr r ;
+        VmBytecode.code = c ;
+        VmBytecode.stack = s ;
+        VmBytecode.env = state.VmBytecode.env }
+
   | (r, [(* Return *)], ((VmBytecode.VMV_code_addr c) :: s)) ->
       (* Return from function call, continue pending code. *)
       { VmBytecode.register = r ;

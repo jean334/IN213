@@ -1,0 +1,8 @@
+win w(1200,1200);
+rect r(50,50,50,50,50);
+var xpos = 0;
+
+while true 
+do
+r.x(xpos);
+ 

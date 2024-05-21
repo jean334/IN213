@@ -37,6 +37,16 @@ and __pp_instr ppf depth instr =
   | VmBytecode.VMI_Pop -> Printf.fprintf ppf "Pop\n%!"
   | VmBytecode.VMI_Popenv -> Printf.fprintf ppf "Popenv\n%!"
   | VmBytecode.VMI_Envext -> Printf.fprintf ppf "Envext\n%!"
+  | VmBytecode.VMI_Window -> Printf.fprintf ppf "Window\n%!"
+  | VmBytecode.VMI_Rect -> Printf.fprintf ppf "Rect\n%!"
+  | VmBytecode.VMI_RectMove -> Printf.fprintf ppf "RectMove\n%!"
+  | VmBytecode.VMI_RectChangeX -> Printf.fprintf ppf "RectChangeX\n%!"
+  | VmBytecode.VMI_RectChangeY -> Printf.fprintf ppf "RectChangeY\n%!"
+  | VmBytecode.VMI_RectChangeW -> Printf.fprintf ppf "RectChangeWidth\n%!"
+  | VmBytecode.VMI_RectChangeH -> Printf.fprintf ppf "RectChangeHeight\n%!"
+  | VmBytecode.VMI_RectChangeC -> Printf.fprintf ppf "RectChangeColor\n%!"
+  | VmBytecode.VMI_Circle -> Printf.fprintf ppf "Circle\n%!"
+  | VmBytecode.VMI_Line -> Printf.fprintf ppf "Line\n%!"
   | VmBytecode.VMI_Loop (_, i) ->
       Printf.fprintf ppf "Loop\n%!" ;
       __pp_code ppf (depth + 1) i ;

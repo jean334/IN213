@@ -4,19 +4,52 @@ type expr =
   | String of string
   | Ident of string
   (*| Rect of (string * expr * expr *expr * expr * expr)*)
-  | Cricle of (string * expr * expr * expr * expr)
-  | Line of (string * expr * expr * expr * expr*expr)
-  | Window of (string * expr * expr * expr * expr)
+  (*| Cricle of (string * expr * expr * expr * expr)*)
+  (*| Line of (string * expr * expr * expr * expr*expr)*)
+  (*| Window of (string * expr * expr * expr * expr)*)
   | ArrayRead of (string * expr)
   | App of (string * (expr list))
   | Monop of (string * expr)
   | Binop of (string * expr * expr)
 
+type win = {
+  w_name : string ;
+  w_params : expr list;
+
+} ;;
+
 type rect = {
   r_name : string ;
   r_params : expr list;
+
 } ;;
 
+type rect_move = {
+  r_name : string ;
+  r_params : expr;
+  } ;;
+  
+(*
+type rect_move_y = {
+  r_name : string ;
+  r_params : expr;
+} ;;
+
+type rect_change_w = {
+  r_name : string ;
+  r_params : expr;
+} ;;
+
+type rect_change_h = {
+  r_name : string ;
+  r_params : expr;
+} ;;
+
+type rect_move_c = {
+  r_name : string ;
+  r_params : expr;
+} ;;
+*)
 type circle = {
   c_name : string ;
   c_params : expr list;
@@ -36,7 +69,15 @@ type instr =
   | Return of (expr option)
   | Iapp of (string * (expr list))
   | Print of expr list
+  | Vardecl of (string * var_decl)
+  | Win of win
   | Rect of rect
+  | RectMove of rect
+  | RectChangeX of rect_move
+  | RectChangeY of rect_move
+  | RectChangeWidth of rect_move
+  | RectChangeHeight of rect_move
+  | RectChangeColor of rect_move
   | Circle of circle
   | Line of line
   (*| Vardecl of (string * var_decl)*)
@@ -58,10 +99,18 @@ type fun_def = {
 
 type toplevel =
   | Vardecl of (string * var_decl)
+  | Win of win
   | Rect of rect
+  | RectMove of rect
+  | RectChangeX of rect_move
+  | RectChangeY of rect_move
+  | RectChangeWidth of rect_move
+  | RectChangeHeight of rect_move
+  | RectChangeColor of rect_move
   | Circle of circle
   | Line of line
   | Fundef of fun_def
+  | Print of expr list
   | Instr of instr
   | Expr of expr
 ;;
@@ -113,10 +162,17 @@ let rec print_instr oc = function
      )
   | Iapp (f_name, params) -> fprintf oc "%s (%a) ;\n" f_name print_exprs params
   | Print params -> fprintf oc "print (%a) ;\n" print_exprs params
+  | Win w -> fprintf oc "Window %s (%a);\n" w.w_name print_exprs w.w_params
   | Rect r -> fprintf oc "Rect %s (%a);\n" r.r_name print_exprs r.r_params
+  | RectMove r -> fprintf oc "RectMove %s (%a);\n" r.r_name print_exprs r.r_params
+  | RectChangeX r -> fprintf oc "RectChangeX %s (%a);\n" r.r_name print_expr r.r_params
+  | RectChangeY r -> fprintf oc "RectChangeY %s (%a);\n" r.r_name print_expr r.r_params
+  | RectChangeWidth r -> fprintf oc "RectChangeW %s (%a);\n" r.r_name print_expr r.r_params
+  | RectChangeHeight r -> fprintf oc "RectChangeH %s (%a);\n" r.r_name print_expr r.r_params
+  | RectChangeColor r -> fprintf oc "RectChangeC %s (%a);\n" r.r_name print_expr r.r_params
   | Circle c -> fprintf oc "Circle %s (%a);\n" c.c_name print_exprs c.c_params
   | Line l -> fprintf oc "Line %s (%a);\n" l.l_name print_exprs l.l_params
-  (*| Vardecl decl -> print_var_decl oc decl*)
+  | Vardecl decl -> print_var_decl oc decl
 ;;
 
 
@@ -137,6 +193,13 @@ let print_toplevel oc = function
         print_instr f_def.body
   | Instr i -> print_instr oc i
   | Rect r -> fprintf oc "Rect %s (%a)" r.r_name print_exprs r.r_params
+  | RectMove r -> fprintf oc "RectMove %s (%a)" r.r_name print_exprs r.r_params
+  | Win w -> fprintf oc "Win %s (%a)" w.w_name print_exprs w.w_params
+  | RectChangeX r -> fprintf oc "RectChangeX %s (%a)" r.r_name print_expr r.r_params
+  | RectChangeY r -> fprintf oc "RectChangeY %s (%a)" r.r_name print_expr r.r_params
+  | RectChangeWidth r -> fprintf oc "RectChangeW %s (%a)" r.r_name print_expr r.r_params
+  | RectChangeHeight r -> fprintf oc "RectChangeH %s (%a)" r.r_name print_expr r.r_params
+  | RectChangeColor r -> fprintf oc "RectChangeC %s (%a)" r.r_name print_expr r.r_params
   | Circle c -> fprintf oc "Circle %s (%a)" c.c_name print_exprs c.c_params
   | Line l -> fprintf oc "Line %s (%a)" l.l_name print_exprs l.l_params
 ;;

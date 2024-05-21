@@ -181,8 +181,84 @@ and compile_var_decls rho = function
                variable cr��e, donc d'indice 0 dans l'environnement. *)
             e_code @ ptr_code @ alloc_code @ [VmBytecode.VMI_Assign 0]) in
       let (rho', q_code) = compile_var_decls (v_name :: rho) q in
-      (rho', (decl_code @ q_code))
-;;
+      (rho', (decl_code @ q_code));;
+
+  
+
+let compile_rect rho (r_name, params) = 
+  let ptr_code =
+    [VmBytecode.VMI_Loadi 1 ;
+      VmBytecode.VMI_Mkblock; VmBytecode.VMI_Envext] in
+  let alloc_code = [VmBytecode.VMI_Loadi 5 ; VmBytecode.VMI_Mkblock; VmBytecode.VMI_Print] in
+  let decl_alloc_code = ptr_code @ alloc_code @ [VmBytecode.VMI_Assign 0] @ [VmBytecode.VMI_Push] in (*là dans le registre on à l'adresse*)
+  let idx = 0 in
+  let r_code_params =
+    let rec compile_params idx = function
+      | [] -> []
+      | h :: t ->
+        compile_expr rho h @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Push] @ [VmBytecode.VMI_Print] @
+        [VmBytecode.VMI_Loadi (idx)] @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Indxwrite] @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Pop] @ [VmBytecode.VMI_Print] @ compile_params (idx + 1) t in
+    compile_params idx params in
+  (r_name::rho, decl_alloc_code @ r_code_params @ [VmBytecode.VMI_Pop] @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Rect])
+      ;;
+
+let compile_rect_move rho (r_name, params) = 
+  let r_code_params =
+    let rec compile_params = function
+      | [] -> []
+      | h :: t ->
+        compile_expr rho h @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Push] @ [VmBytecode.VMI_Print] @ compile_params t in
+    compile_params params in
+  (rho, r_code_params @ compile_expr rho (Ast.Ident r_name) @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_RectMove] @ [VmBytecode.VMI_Rect])
+      ;;
+
+
+let compile_win rho (r_name, params) = 
+  let ptr_code =
+    [VmBytecode.VMI_Loadi 1 ;
+      VmBytecode.VMI_Mkblock; VmBytecode.VMI_Envext] in
+  let alloc_code = [VmBytecode.VMI_Loadi 2 ; VmBytecode.VMI_Mkblock; VmBytecode.VMI_Print] in
+  let decl_alloc_code = ptr_code @ alloc_code @ [VmBytecode.VMI_Assign 0] @ [VmBytecode.VMI_Push] in (*là dans le registre on à l'adresse*)
+  let idx = 0 in
+  let r_code_params =
+    let rec compile_params idx = function
+      | [] -> []
+      | h :: t ->
+        compile_expr rho h @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Push] @ [VmBytecode.VMI_Print] @
+        [VmBytecode.VMI_Loadi (idx)] @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Indxwrite] @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Pop] @ [VmBytecode.VMI_Print] @ compile_params (idx + 1) t in
+    compile_params idx params in
+  (r_name::rho, decl_alloc_code @ r_code_params @ [VmBytecode.VMI_Pop]@ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Window])
+      ;;
+
+let compile_rect_move_x rho (r_name, param) = 
+  let r_code_param = match param with
+    | h -> compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_expr rho (Ast.Ident r_name) @ [VmBytecode.VMI_RectChangeX]
+    | _ -> raise (Failure "Not a int") in
+  (rho, r_code_param @ [VmBytecode.VMI_Rect]);;
+
+let compile_rect_move_y rho (r_name, param) = 
+  let r_code_param = match param with
+    | h -> compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_expr rho (Ast.Ident r_name) @ [VmBytecode.VMI_RectChangeY]
+    | _ -> raise (Failure "Not a int") in
+  (rho, r_code_param @ [VmBytecode.VMI_Rect]);;
+
+let compile_rect_move_w rho (r_name, param) = 
+  let r_code_param = match param with
+    | h -> compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_expr rho (Ast.Ident r_name) @ [VmBytecode.VMI_RectChangeW]
+    | _ -> raise (Failure "Not a int") in
+  (rho, r_code_param @ [VmBytecode.VMI_Rect]);;
+
+let compile_rect_move_h rho (r_name, param) = 
+  let r_code_param = match param with
+    | h -> compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_expr rho (Ast.Ident r_name) @ [VmBytecode.VMI_RectChangeH]
+    | _ -> raise (Failure "Not a int") in
+  (rho, r_code_param @ [VmBytecode.VMI_Rect]);;
+
+let compile_rect_move_c rho (r_name, param) = 
+  let r_code_param = match param with
+    | h -> compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_expr rho (Ast.Ident r_name) @ [VmBytecode.VMI_RectChangeC]
+    | _ -> raise (Failure "Not a int") in
+  (rho, r_code_param @ [VmBytecode.VMI_Rect]);;
 
 
 type object_code = {
@@ -206,21 +282,37 @@ let compile_toplevel rho = function
       let (rho', var_code) =  compile_var_decls rho [v_decl] in
        (rho', (TC_Global var_code))
   | Ast.Fundef f_def ->
-      (* Penser � inverser la list des param�tres car on les empile dans
-         l'environnement. *)
       let rho' = (List.rev f_def.Ast.params) @ rho in
       let (rho'', vars_code) = compile_var_decls rho' f_def.Ast.vars in
-      (* Compilation du corps de la fonction. *)
       let body_code = compile_instr rho'' f_def.Ast.body in
-      (* On joint le code des d�clarations de variables locales et celui du
-         corps de la fonction. *)
       let all_code = vars_code @ body_code in
-      (* L'environnement reste inchang� au final car les fonctions ne sont pas
-         li�es dans l'environnement. *)
       (rho, (TC_Fun (f_def.Ast.f_name, all_code)))
-  | Ast.Rect r -> 
-;;
+  | Ast.Instr i ->
+      let i_code = compile_instr rho i in
+      (rho, TC_Global i_code)
+  | Ast.Win w ->
+    let (rho', win_code) = compile_win rho (w.w_name, w.w_params) in
+    (rho', (TC_Global win_code))
+  | Ast.Rect r ->
+    let (rho', rect_code) = compile_rect rho (r.r_name, r.r_params) in
+    (rho', (TC_Global rect_code))
+  | Ast.RectMove r ->
+    let (rho', rect_code) = compile_rect_move rho (r.r_name, r.r_params) in
+    (rho', (TC_Global rect_code))
+  | Ast.RectChangeX r ->
+    let (rho', rect_code) = compile_rect_move_x rho (r.r_name, r.r_params) in
+    (rho', (TC_Global rect_code))
+  | Ast.RectChangeY r ->
+    let (rho', rect_code) = compile_rect_move_y rho (r.r_name, r.r_params) in
+    (rho', (TC_Global rect_code))
+  | Ast.RectChangeWidth r ->
+    let (rho', rect_code) = compile_rect_move_w rho (r.r_name, r.r_params) in
+    (rho', (TC_Global rect_code))
+  | Ast.RectChangeHeight r ->
+    let (rho', rect_code) = compile_rect_move_h rho (r.r_name, r.r_params) in
+    (rho', (TC_Global rect_code))
 
+;;
 
 let rec compile_program rho = function
   | [] -> { global = [] ; funs = [] }
@@ -243,12 +335,21 @@ type executable = {
   funs_codes : (string * VmBytecode.vm_code) list
 } ;;
 
-
+(*
 let make_executable obj_code =
   (* On recherche le code du main. *)
   let main_code =
     (try List.assoc "main" obj_code.funs with
     | Not_found -> raise (Failure "Main not defined")) in
+  let whole_code = obj_code.global @ main_code in
+  { entry_point = whole_code ; funs_codes = obj_code.funs }
+;;
+*)
+let make_executable obj_code =
+  (* On recherche le code du main. *)
+  let main_code =
+    try List.assoc "main" obj_code.funs with
+    | Not_found -> [] in
   let whole_code = obj_code.global @ main_code in
   { entry_point = whole_code ; funs_codes = obj_code.funs }
 ;;

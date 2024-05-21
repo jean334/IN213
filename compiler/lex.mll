@@ -91,6 +91,11 @@ rule lex = parse
         | "win" -> WIN
         | "force" -> FORCE
         | "rect" -> RECT
+        | "x" -> X
+        | "y" -> Y
+        | "width" -> WIDTH
+        | "height" -> HEIGHT
+        | "color" -> COLOR
         | "circle" -> CIRCLE
         | "triangle" -> TRIANGLE
         | "line" -> LINE
@@ -102,6 +107,7 @@ rule lex = parse
   | "+"   { PLUS } | "-"   { MINUS } | "*" { MULT } | "/" { DIV }
   | ";"   { SEMICOLON }
   | ","   { COMMA }
+  | "."   { DOT }
   | ":="  { COLONEQUAL }
   | '('   { LPAR }
   | ')'   { RPAR }

@@ -26,6 +26,16 @@ and vm_instr =
   | VMI_Le
   | VMI_Gt
   | VMI_Ge
+  | VMI_Window
+  | VMI_Rect
+  | VMI_RectMove
+  | VMI_RectChangeX
+  | VMI_RectChangeY
+  | VMI_RectChangeW
+  | VMI_RectChangeH
+  | VMI_RectChangeC
+  | VMI_Line
+  | VMI_Circle
 ;;
 
 type vm_val =
@@ -44,11 +54,11 @@ type vm_stack = vm_val list ;;
 type mem = {
   mutable size : int ;          (* Taille d'un seul tas. *)
   mutable next_free : int ;     (* Adresse prochain bloc libre. *)
-  mutable heap_base : int ;     (* Adresse de début du tas courant.
-        Idéalement, seul le module Mem doit s'en occuper. Dans les faits,
-        afin de vérifier les accès en dehors de la mémoire, VmExec a besoin
-        de connaître cette valeur afin de vérifier qu'une adresse est bien
-        inférieure à la taille de la zone mémoire. *)
+  mutable heap_base : int ;     (* Adresse de dï¿½but du tas courant.
+        Idï¿½alement, seul le module Mem doit s'en occuper. Dans les faits,
+        afin de vï¿½rifier les accï¿½s en dehors de la mï¿½moire, VmExec a besoin
+        de connaï¿½tre cette valeur afin de vï¿½rifier qu'une adresse est bien
+        infï¿½rieure ï¿½ la taille de la zone mï¿½moire. *)
   mutable data : vm_val array } (* Les 2 tas, donc de taille size * 2. *)
 ;;
 
