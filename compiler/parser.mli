@@ -24,11 +24,11 @@ type token =
   | FORCE
   | WIN
   | COLONEQUAL
-  | X
-  | Y
-  | WIDTH
-  | HEIGHT
-  | COLOR
+  | DOT_X
+  | DOT_Y
+  | DOT_WIDTH
+  | DOT_HEIGHT
+  | DOT_COLOR
   | WHILE
   | DO
   | DONE

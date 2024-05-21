@@ -23,7 +23,7 @@ let main () =
        )
     | n -> usage () in
   let lexbuf = Lexing.from_channel input_channel in
-  let _ = Printf.printf "        Welcome to IMP, version %s\n%!" version in
+  let _ = Printf.printf "        Welcome to GOLEM, version %s\n%!" version in
   try
     let _ = Printf.printf  "> %!" in
     let prgm = Parser.program Lex.lex lexbuf in

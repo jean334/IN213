@@ -14,7 +14,7 @@ open Ast ;;
 %token FORCE
 %token WIN
 %token COLONEQUAL
-%token X Y WIDTH HEIGHT COLOR
+%token DOT_X DOT_Y DOT_WIDTH DOT_HEIGHT DOT_COLOR
 %token WHILE DO DONE BEGIN END RETURN VAR
 %token PLUS MINUS MULT DIV EQUALEQUAL GREATER SMALLER GREATEREQUAL SMALLEREQUAL
 %token LPAR RPAR SEMICOLON COMMA LBRACKET RBRACKET LBRACE RBRACE DOT
@@ -67,24 +67,24 @@ rect_move:
     { { r_name = $1 ; r_params = $3 } }
 
 rect_change_x:
-    IDENT DOT X LPAR expr RPAR SEMICOLON
-    { { r_name = $1 ; r_params = $5 } }
+    IDENT DOT_X LPAR expr RPAR SEMICOLON
+    { { r_name = $1 ; r_params = $4 } }
 
 rect_change_y:
-    IDENT DOT Y LPAR expr RPAR SEMICOLON
-    { { r_name = $1 ; r_params = $5 } }
+    IDENT DOT_Y LPAR expr RPAR SEMICOLON
+    { { r_name = $1 ; r_params = $4 } }
 
 rect_change_width:
-    IDENT DOT WIDTH LPAR expr RPAR SEMICOLON
-    { { r_name = $1 ; r_params = $5 } }
+    IDENT DOT_WIDTH LPAR expr RPAR SEMICOLON
+    { { r_name = $1 ; r_params = $4 } }
 
 rect_change_height:
-    IDENT DOT HEIGHT LPAR expr RPAR SEMICOLON
-    { { r_name = $1 ; r_params = $5 } }
+    IDENT DOT_HEIGHT LPAR expr RPAR SEMICOLON
+    { { r_name = $1 ; r_params = $4 } }
 
 rect_change_color:
-    IDENT DOT COLOR LPAR expr RPAR SEMICOLON
-    { { r_name = $1 ; r_params = $5 } }
+    IDENT DOT_COLOR LPAR expr RPAR SEMICOLON
+    { { r_name = $1 ; r_params = $4 } }
 
 circle_decl:
 | CIRCLE IDENT LPAR exprs_list RPAR SEMICOLON
@@ -165,8 +165,6 @@ instr:
     { Iapp ($1, $3) }
 | PRINT LPAR opt_exprs RPAR SEMICOLON
     { Print $3 }
-(*| VAR IDENT SEMICOLON
-    { Vardecl ($2, Scalar) }*)
 
 ;
 

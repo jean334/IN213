@@ -185,10 +185,10 @@ let rec next_state state =
      s) ->
        (* Read identifier. *)
        let addr =
-         (try (List.nth state.VmBytecode.env n) with
-         | Failure ("nth") ->
-             raise
-               (Failure ("VMI_Read out of env : " ^ (string_of_int n)))) in
+        try List.nth state.VmBytecode.env n with
+        | Failure msg when msg = "nth" ->
+            raise (Failure ("VMI_Read out of env : " ^ (string_of_int n)))
+        | Failure _ -> raise (Failure "Unexpected failure in VMI_Read") in
        if addr >= Mem.mem.VmBytecode.heap_base + Mem.mem.VmBytecode.size then
          raise (Failure "Access out of memory") ;
        { VmBytecode.register = Mem.mem.VmBytecode.data.(addr) ;
@@ -215,11 +215,11 @@ let rec next_state state =
      s) ->
        (* Affectation d'une variable. Prend la valeur � affecter dans le
           registre. *)
-       let addr =
-         (try (List.nth state.VmBytecode.env n) with
-         | Failure ("nth") ->
-             raise
-               (Failure ("VMI_Assing out of env : " ^ (string_of_int n)))) in
+    let addr =
+      try List.nth state.VmBytecode.env n with
+      | Failure msg when msg = "nth" ->
+          raise (Failure ("VMI_Read out of env : " ^ (string_of_int n)))
+      | Failure _ -> raise (Failure "Unexpected failure in VMI_Read") in
        if addr >= Mem.mem.VmBytecode.heap_base + Mem.mem.VmBytecode.size then
          raise (Failure "Access out of memory") ;
        Mem.mem.VmBytecode.data.(addr) <- r ;
@@ -339,7 +339,10 @@ let rec next_state state =
       VmBytecode.env = state.VmBytecode.env }
 
   | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_Rect) ::c), s) ->
-    Graphics.set_color blue ;
+    (*let p5 = match Mem.mem.VmBytecode.data.(r + 4) with
+    | VmBytecode.VMV_string s -> s
+    | _ -> failwith "Expected an string" in
+    Graphics.set_color p5;*)
     let p1 = match Mem.mem.VmBytecode.data.(r) with
       | VmBytecode.VMV_int i -> i
       | _ -> failwith "Expected an integer" in
@@ -350,9 +353,6 @@ let rec next_state state =
       | VmBytecode.VMV_int i -> i
       | _ -> failwith "Expected an integer" in
     let p4 = match Mem.mem.VmBytecode.data.(r + 3) with
-      | VmBytecode.VMV_int i -> i
-      | _ -> failwith "Expected an integer" in
-    let p5 = match Mem.mem.VmBytecode.data.(r + 4) with
       | VmBytecode.VMV_int i -> i
       | _ -> failwith "Expected an integer" in
       Graphics.draw_rect p1 p2 p3 p4 ;

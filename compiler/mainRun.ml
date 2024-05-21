@@ -9,10 +9,13 @@ let load_run_and_quit fname =
   let in_handle = open_in_bin fname in
   (* Get the bytecode of the program. *)
   let (exec : Compile.executable) =
-    (try input_value in_handle with
-    | Failure "input_value: bad object" ->
-        Printf.printf "Error: bad bytecode format.\n%!" ;
-        exit (-2)) in
+  try input_value in_handle with
+  | Failure msg when msg = "input_value: bad object" ->
+      Printf.printf "Error: bad bytecode format.\n%!" ;
+      exit (-2)
+  | Failure _ -> 
+      Printf.printf "Error: unexpected failure.\n%!" ;
+      exit (-2) in
   VmExec.all_funs := exec.Compile.funs_codes ;
   (* Initial state. *)
   let state = ref {

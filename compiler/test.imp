@@ -1,8 +1,9 @@
 win w(1200,1200);
 rect r(50,50,50,50,50);
-var xpos = 0;
-
-while true 
-do
-r.x(xpos);
- 
+r.x(12);
+var pos_x;
+pos_x := 1;
+while true do
+r.x(pos_x);
+pos_x := pos_x + 1;
+done 

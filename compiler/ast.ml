@@ -3,10 +3,6 @@ type expr =
   | Bool of bool
   | String of string
   | Ident of string
-  (*| Rect of (string * expr * expr *expr * expr * expr)*)
-  (*| Cricle of (string * expr * expr * expr * expr)*)
-  (*| Line of (string * expr * expr * expr * expr*expr)*)
-  (*| Window of (string * expr * expr * expr * expr)*)
   | ArrayRead of (string * expr)
   | App of (string * (expr list))
   | Monop of (string * expr)
@@ -29,27 +25,6 @@ type rect_move = {
   r_params : expr;
   } ;;
   
-(*
-type rect_move_y = {
-  r_name : string ;
-  r_params : expr;
-} ;;
-
-type rect_change_w = {
-  r_name : string ;
-  r_params : expr;
-} ;;
-
-type rect_change_h = {
-  r_name : string ;
-  r_params : expr;
-} ;;
-
-type rect_move_c = {
-  r_name : string ;
-  r_params : expr;
-} ;;
-*)
 type circle = {
   c_name : string ;
   c_params : expr list;
@@ -80,7 +55,6 @@ type instr =
   | RectChangeColor of rect_move
   | Circle of circle
   | Line of line
-  (*| Vardecl of (string * var_decl)*)
 
 and var_decl =
   | Scalar
@@ -98,6 +72,13 @@ type fun_def = {
 
 
 type toplevel =
+  (*| While of (expr * instr)
+  | If of (expr * instr * instr)
+  | Assign of (string * expr)
+  | ArrayWrite of (string * expr * expr)
+  | Seq of (instr * instr)
+  | Return of (expr option)
+  | Iapp of (string * (expr list))*)
   | Vardecl of (string * var_decl)
   | Win of win
   | Rect of rect
@@ -173,6 +154,7 @@ let rec print_instr oc = function
   | Circle c -> fprintf oc "Circle %s (%a);\n" c.c_name print_exprs c.c_params
   | Line l -> fprintf oc "Line %s (%a);\n" l.l_name print_exprs l.l_params
   | Vardecl decl -> print_var_decl oc decl
+  | _ -> fprintf oc "osef"
 ;;
 
 
@@ -190,7 +172,7 @@ let print_toplevel oc = function
   | Fundef f_def ->
       fprintf oc "%s (%a)\nbegin\n%a%aend\n"
         f_def.f_name print_param_decls f_def.params print_var_decls f_def.vars
-        print_instr f_def.body
+        print_instr ( f_def.body)
   | Instr i -> print_instr oc i
   | Rect r -> fprintf oc "Rect %s (%a)" r.r_name print_exprs r.r_params
   | RectMove r -> fprintf oc "RectMove %s (%a)" r.r_name print_exprs r.r_params
@@ -202,6 +184,7 @@ let print_toplevel oc = function
   | RectChangeColor r -> fprintf oc "RectChangeC %s (%a)" r.r_name print_expr r.r_params
   | Circle c -> fprintf oc "Circle %s (%a)" c.c_name print_exprs c.c_params
   | Line l -> fprintf oc "Line %s (%a)" l.l_name print_exprs l.l_params
+  | _ -> fprintf oc "Not implemented\n"
 ;;
 
 
