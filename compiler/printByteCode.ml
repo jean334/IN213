@@ -9,6 +9,7 @@ and __pp_instr ppf depth instr =
   | VmBytecode.VMI_Loadb b -> Printf.fprintf ppf "Loadb %b\n%!" b
   | VmBytecode.VMI_Loads s ->
       Printf.fprintf ppf "Loads \"%s\"\n%!" (String.escaped s)
+  | VmBytecode.VMI_Loadf f -> Printf.fprintf ppf "Loadf %f\n%!" f
   | VmBytecode.VMI_Plus -> Printf.fprintf ppf "Plus\n%!"
   | VmBytecode.VMI_Sub -> Printf.fprintf ppf "Sub\n%!"
   | VmBytecode.VMI_Mult -> Printf.fprintf ppf "Mult\n%!"
@@ -55,6 +56,10 @@ and __pp_instr ppf depth instr =
   | VmBytecode.VMI_Line -> Printf.fprintf ppf "Line\n%!"
   |VmBytecode.VMI_FPS -> Printf.fprintf ppf "FPS\n%!"
   |VmBytecode.VMI_Background -> Printf.fprintf ppf "Background\n%!"
+  |VmBytecode.VMI_Sin -> Printf.fprintf ppf "Sin\n%!"
+  |VmBytecode.VMI_Cos -> Printf.fprintf ppf "Cos\n%!"
+  |VmBytecode.VMI_AssignTrig i -> Printf.fprintf ppf "AssignTrig %d\n%!" i
+  |VmBytecode.VMI_MathFunc -> Printf.fprintf ppf "MathFunc\n%!"
   | VmBytecode.VMI_Loop (_, i) ->
       Printf.fprintf ppf "Loop\n%!" ;
       __pp_code ppf (depth + 1) i ;
@@ -77,6 +82,7 @@ let rec pp_value ppf = function
   | VmBytecode.VMV_bool b -> Printf.fprintf ppf "%b" b
   | VmBytecode.VMV_string s -> Printf.fprintf ppf "%s" s
   | VmBytecode.VMV_addr i -> Printf.fprintf ppf "@%d" i
+  | VmBytecode.VMV_float f -> Printf.fprintf ppf "%f" f
   | VmBytecode.VMV_code_addr c ->
       Printf.fprintf ppf "<code>\n" ;
       __pp_code ppf 4 c ;

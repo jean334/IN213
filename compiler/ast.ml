@@ -2,11 +2,15 @@ type expr =
   | Int of int
   | Bool of bool
   | String of string
+  | Float of float
   | Ident of string
   | ArrayRead of (string * expr)
   | App of (string * (expr list))
   | Monop of (string * expr)
   | Binop of (string * expr * expr)
+  | Sin of expr
+  | Cos of expr
+
 
 type win = {
   w_name : string ;
@@ -48,10 +52,17 @@ type colors = {
   colors : expr list;
 } ;;
 
+
+type math_func = {
+  f_name : string ;
+  f_params : expr list;
+} ;;
+
 type instr =
   | While of (expr * instr)
   | If of (expr * instr * instr)
   | Assign of (string * expr)
+  | AssignTrig of (string * expr)
   | ArrayWrite of (string * expr * expr)
   | Seq of (instr * instr)
   | Return of (expr option)
@@ -76,6 +87,9 @@ type instr =
   | Line of line
   | SetFps of fps
   | SetBackground of colors
+  | Sin of expr
+  | Cos of expr
+  | MathFunc of math_func
 
 and var_decl =
   | Scalar
@@ -117,6 +131,9 @@ type toplevel =
   | Expr of expr
   | SetFps of fps
   | SetBackground of colors
+  | Sin of expr
+  | Cos of expr
+  | MathFunc of math_func
 ;;
 
 type program = toplevel list ;;
@@ -130,10 +147,13 @@ let rec print_expr oc = function
   | Bool b -> fprintf oc "%s" (if b then "T" else "F")
   | Ident s -> fprintf oc "%s" s
   | String s -> fprintf oc "\"%s\"" (String.escaped s)
+  | Float f -> fprintf oc "%f" f
   | App (f_name, params) -> fprintf oc "%s (%a)" f_name print_exprs params
   | Binop (op, e1, e2) ->
       fprintf oc "(%a %s %a)" print_expr e1 op print_expr e2
   | Monop (op, e) -> fprintf oc "%s%a" op print_expr e
+  | Sin e -> fprintf oc "Sin(%a)" print_expr e
+  | Cos e -> fprintf oc "Cos(%a)" print_expr e
   | ArrayRead (s, e) -> fprintf oc "%s[%a]" s print_expr e
 
 
@@ -184,7 +204,12 @@ let rec print_instr oc = function
   | Line l -> fprintf oc "Line %s (%a);\n" l.l_name print_exprs l.l_params
   | SetFps f -> fprintf oc "SetFps (%a);\n" print_expr f.fps
   | SetBackground c -> fprintf oc "SetBackground (%a);\n" print_exprs c.colors
+
+  | Sin f -> fprintf oc "Sin %a;\n" print_expr f
+  | Cos f -> fprintf oc "Cos %a;\n" print_expr f
+  | MathFunc f -> fprintf oc "MathFunc %s (%a);\n" f.f_name print_exprs f.f_params
   | Vardecl decl -> print_var_decl oc decl
+  | _ -> fprintf oc "Not implemented\n"
 ;;
 
 
@@ -222,6 +247,10 @@ let print_toplevel oc = function
   | Line l -> fprintf oc "Line %s (%a)" l.l_name print_exprs l.l_params
   | SetFps f -> fprintf oc "SetFps (%a)" print_expr f.fps
   | SetBackground c -> fprintf oc "SetBackground (%a);\n" print_exprs c.colors
+
+  | Sin f -> fprintf oc "Sin %a;\n" print_expr f
+  | Cos f -> fprintf oc "Cos %a;\n" print_expr f
+  | MathFunc f -> fprintf oc "MathFunc %s (%a);\n"  f.f_name print_exprs f.f_params
   | _ -> fprintf oc "Not implemented\n"
 ;;
 

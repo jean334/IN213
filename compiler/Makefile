@@ -12,13 +12,13 @@ CAML_B_LFLAGS = `ocamlfind query -predicates byte -a-format graphics, unix`
 TEST_FILES = arrangt.imp array.imp array0.imp array1.imp fact.imp\
 	fact_rec.imp global.imp trivial.imp trivial2.imp trivial3.imp trivial4.imp
 
-COMPILE_EXEC = impc
+COMPILE_EXEC = golemc
 COMPILE_SRCS = ast.ml printByteCode.ml compile.ml mainCompile.ml
 COMPILE_GENERATED = lex.ml parser.ml parser.mli
 COMPILE_MLIS = vmBytecode.mli printByteCode.mli compile.mli
 COMPILE_OBJS = $(COMPILE_GENERATED:.ml=.cmo) $(COMPILE_SRCS:.ml=.cmo)
 
-VM_EXEC = imprun
+VM_EXEC = golemrun
 VM_SRCS = printByteCode.ml mem.ml vmExec.ml mainRun.ml
 VM_GENERATED =
 VM_MLIS = vmBytecode.mli printByteCode.mli mem.mli

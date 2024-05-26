@@ -28,6 +28,7 @@ let rec compile_expr rho = function
   | Ast.Int i -> [ VmBytecode.VMI_Loadi i ]
   | Ast.Bool b -> [ VmBytecode.VMI_Loadb b ]
   | Ast.String s -> [ VmBytecode.VMI_Loads s ]
+  | Ast.Float f -> [ VmBytecode.VMI_Loadf f ]
   | Ast.Ident id ->
       let pos =
         (try find_pos id rho with Not_found -> raise (Unbound_identifier id)) in
@@ -50,6 +51,12 @@ let rec compile_expr rho = function
           (* Translate to 0 - e. *)
           let translation = Ast.Binop ("-", (Ast.Int 0), e) in
           compile_expr rho translation
+      | "sin" -> 
+        let (rho', math_code) = compile_sin rho e in
+        math_code
+      | "cos" -> 
+        let (rho', math_code) = compile_cos rho e in
+        math_code
       | _ -> raise (Failure "Unknown monop")
      )
   | Ast.Binop (o_name, e1, e2) ->
@@ -69,6 +76,14 @@ let rec compile_expr rho = function
       let e1_code = compile_expr rho e1 in
       let e2_code = compile_expr rho e2 in
         (e1_code @ [VmBytecode.VMI_Push] @ e2_code @ [binop_instr])
+
+  | Ast.Sin f ->
+    Printf.printf "sin dans compile\n";
+    let (rho', math_code) = compile_sin rho f in
+    math_code
+  | Ast.Cos f ->
+    let (rho', math_code) = compile_cos rho f in
+    math_code
 
 
 and compile_app_args rho = function
@@ -120,6 +135,12 @@ and compile_instr rho = function
       let pos =
         (try find_pos id rho with Not_found -> raise (Unbound_identifier id)) in
       e_code @ [VmBytecode.VMI_Assign pos]
+  | Ast.AssignTrig (id, e) ->
+      (* Compilation valeur � stocker -> registre *)
+      let e_code = compile_expr rho e in
+      let pos =
+        (try find_pos id rho with Not_found -> raise (Unbound_identifier id)) in
+      e_code @ [VmBytecode.VMI_AssignTrig pos]
   | Ast.Seq (i1, i2) ->
       let i1_code = compile_instr rho i1 in
       let i2_code = compile_instr rho i2 in
@@ -190,12 +211,26 @@ and compile_instr rho = function
   | Ast.CircleChangeRadius c ->
     let (rho', circle_code) = compile_circle_move_r rho (c.c_name, c.c_params) in
     circle_code
+
+  | Ast.Sin f ->
+    let (rho', math_code) = compile_sin rho f in
+    math_code
+  | Ast.Cos f ->
+    let (rho', math_code) = compile_cos rho f in
+    math_code
+  
+  | Ast.MathFunc f ->
+    let (rho', math_code) = compile_math_func rho (f.f_name, f.f_params) in
+    math_code
+  
+
   | Ast.SetFps fps ->
     let (rho', fps_code) = compile_fps rho fps.fps in
     fps_code
   | Ast.SetBackground color ->
     let (rho', color_code) = compile_background rho color in
     color_code
+  | _ -> raise (Failure "Not implemented")
 
 
 and compile_var_decls rho = function
@@ -362,6 +397,26 @@ and compile_circle_move_r rho (c_name, param) =
   (rho, r_code_param @ [VmBytecode.VMI_Circle])
 
 
+and compile_sin rho arg =
+  let r_code_params =
+    compile_expr rho arg @ [VmBytecode.VMI_Push] in 
+(rho, r_code_params @ [VmBytecode.VMI_Sin] )
+
+and compile_cos rho arg =
+  let r_code_params =
+    compile_expr rho arg @ [VmBytecode.VMI_Push] in 
+(rho, r_code_params @ [VmBytecode.VMI_Cos] )
+
+and compile_math_func rho (f_name, f_params) = 
+    let idx = 0 in
+    let r_code_params =
+      let rec compile_params idx = function
+        | [] -> []
+        | h :: t ->
+          compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_params (idx + 1) t in
+      compile_params idx f_params in  
+  (rho, r_code_params @ [VmBytecode.VMI_Loadi idx] @ [VmBytecode.VMI_Push] @ [VmBytecode.VMI_Loads f_name] @ [VmBytecode.VMI_MathFunc] )
+
 and compile_toplevel rho = function
   (*| Ast.While (e, i) ->
     let e_code = compile_expr rho e in
@@ -420,6 +475,17 @@ and compile_toplevel rho = function
   | Ast.CircleChangeRadius c ->
     let (rho', circle_code) = compile_circle_move_r rho (c.c_name, c.c_params) in
     (rho', (TC_Global circle_code))
+
+  | Ast.Sin f ->
+    let (rho', math_code) = compile_sin rho f in
+    (rho', (TC_Global math_code))
+  | Ast.Cos f ->
+    let (rho', math_code) = compile_cos rho f in
+    (rho', (TC_Global math_code))
+
+  | Ast.MathFunc f ->
+    let (rho', math_code) = compile_math_func rho (f.f_name, f.f_params) in
+    (rho', (TC_Global math_code))
   
   | Ast.SetFps fps ->
     let (rho', fps_code) = compile_fps rho fps.fps in

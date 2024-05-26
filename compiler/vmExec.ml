@@ -58,13 +58,26 @@ let rec next_state state =
         VmBytecode.code = c ;
         VmBytecode.stack = s ;
         VmBytecode.env = state.VmBytecode.env }
-  | ((VmBytecode.VMV_int i), (VmBytecode.VMI_Plus :: c),
-     ((VmBytecode.VMV_int j):: s')) ->
-       (* Addition. *)
-       { VmBytecode.register = VmBytecode.VMV_int (i + j) ;
-         VmBytecode.code = c ;
-         VmBytecode.stack = s' ;
-         VmBytecode.env = state.VmBytecode.env }
+
+  | (_, ((VmBytecode.VMI_Loadf f) :: c), s) ->
+      (* String constant. *)
+      { VmBytecode.register = VmBytecode.VMV_float f ;
+        VmBytecode.code = c ;
+        VmBytecode.stack = s ;
+        VmBytecode.env = state.VmBytecode.env }
+| ((VmBytecode.VMV_int i), (VmBytecode.VMI_Plus :: c), ((VmBytecode.VMV_int j):: s')) ->
+  (* Addition for integers. *)
+  { VmBytecode.register = VmBytecode.VMV_int (i + j) ;
+    VmBytecode.code = c ;
+    VmBytecode.stack = s' ;
+    VmBytecode.env = state.VmBytecode.env }
+| ((VmBytecode.VMV_float f), (VmBytecode.VMI_Plus :: c), ((VmBytecode.VMV_float g):: s')) ->
+  (* Addition for floats. *)
+  { VmBytecode.register = VmBytecode.VMV_float (f +. g) ;
+    VmBytecode.code = c ;
+    VmBytecode.stack = s' ;
+    VmBytecode.env = state.VmBytecode.env }
+
   | ((VmBytecode.VMV_int i), (VmBytecode.VMI_Sub :: c),
      ((VmBytecode.VMV_int j):: s')) ->
        (* Subtraction.
@@ -75,13 +88,19 @@ let rec next_state state =
          VmBytecode.code = c ;
          VmBytecode.stack = s' ;
          VmBytecode.env = state.VmBytecode.env }
-  | ((VmBytecode.VMV_int i), (VmBytecode.VMI_Mult :: c),
-     ((VmBytecode.VMV_int j):: s')) ->
-       (* Multiplication. *)
-       { VmBytecode.register = VmBytecode.VMV_int (i * j) ;
-         VmBytecode.code = c ;
-         VmBytecode.stack = s' ;
-         VmBytecode.env = state.VmBytecode.env }
+| ((VmBytecode.VMV_int i), (VmBytecode.VMI_Mult :: c), ((VmBytecode.VMV_int j):: s')) ->
+  (* Multiplication for integers. *)
+  { VmBytecode.register = VmBytecode.VMV_int (i * j) ;
+    VmBytecode.code = c ;
+    VmBytecode.stack = s' ;
+    VmBytecode.env = state.VmBytecode.env }
+| ((VmBytecode.VMV_float f), (VmBytecode.VMI_Mult :: c), ((VmBytecode.VMV_float g):: s')) ->
+  (* Multiplication for floats. *)
+  { VmBytecode.register = VmBytecode.VMV_float (f *. g) ;
+    VmBytecode.code = c ;
+    VmBytecode.stack = s' ;
+    VmBytecode.env = state.VmBytecode.env }
+
   | ((VmBytecode.VMV_int i), (VmBytecode.VMI_Div :: c),
      ((VmBytecode.VMV_int j):: s')) ->
        (* Division.
@@ -363,140 +382,240 @@ let rec next_state state =
       VmBytecode.stack = s ;
       VmBytecode.env = state.VmBytecode.env }
   
-  | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectMove) ::c), p1::p2::p3::p4::p5::s) ->
-      Mem.mem.VmBytecode.data.(r) <- p1;
-      Mem.mem.VmBytecode.data.(r + 1) <- p2;
-      Mem.mem.VmBytecode.data.(r + 2) <- p3;
-      Mem.mem.VmBytecode.data.(r + 3) <- p4;
-      Mem.mem.VmBytecode.data.(r + 4) <- p5;
-      Printf.printf "RectMove %a\n" PrintByteCode.pp_value p5;
-      { VmBytecode.register = VmBytecode.VMV_addr r ;
-      VmBytecode.code = c ;
-      VmBytecode.stack = s ;
-      VmBytecode.env = state.VmBytecode.env }
+| ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectMove) ::c), p1::p2::p3::p4::p5::s) ->
+  let to_int = function
+    | VmBytecode.VMV_float f -> VmBytecode.VMV_int (int_of_float f)
+    | VmBytecode.VMV_int i -> VmBytecode.VMV_int i
+    | _ -> failwith "Expected a float"
+  in
+  Mem.mem.VmBytecode.data.(r) <- to_int p1;
+  Mem.mem.VmBytecode.data.(r + 1) <- to_int p2;
+  Mem.mem.VmBytecode.data.(r + 2) <- to_int p3;
+  Mem.mem.VmBytecode.data.(r + 3) <- to_int p4;
+  Mem.mem.VmBytecode.data.(r + 4) <- to_int p5;
+  { VmBytecode.register = VmBytecode.VMV_addr r ;
+  VmBytecode.code = c ;
+  VmBytecode.stack = s ;
+  VmBytecode.env = state.VmBytecode.env }
 
-    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeX) ::c), p1::s) ->
-        Mem.mem.VmBytecode.data.(r) <- p1;
-        Printf.printf "RectChangeX %a\n" PrintByteCode.pp_value p1;
-        { VmBytecode.register = VmBytecode.VMV_addr r ;
-        VmBytecode.code = c ;
-        VmBytecode.stack = s ;
-        VmBytecode.env = state.VmBytecode.env }
+| ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeX) ::c), p1::s) ->
+  let to_int = function
+  | VmBytecode.VMV_float f -> VmBytecode.VMV_int (int_of_float f)
+  | VmBytecode.VMV_int i -> VmBytecode.VMV_int i
+  | _ -> failwith "Expected a float"
+  in
+  Mem.mem.VmBytecode.data.(r) <- to_int p1;
+  Printf.printf "RectChangeX %a\n" PrintByteCode.pp_value p1;
+  { VmBytecode.register = VmBytecode.VMV_addr r ;
+  VmBytecode.code = c ;
+  VmBytecode.stack = s ;
+  VmBytecode.env = state.VmBytecode.env }
 
-    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeY) ::c), p1::s) ->
-        Mem.mem.VmBytecode.data.(r+1) <- p1;
-        Printf.printf "RectChangeY %a\n" PrintByteCode.pp_value p1;
-        { VmBytecode.register = VmBytecode.VMV_addr r ;
-        VmBytecode.code = c ;
-        VmBytecode.stack = s ;
-        VmBytecode.env = state.VmBytecode.env }
+| ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeY) ::c), p1::s) ->
+  let to_int = function
+  | VmBytecode.VMV_float f -> VmBytecode.VMV_int (int_of_float f)
+  | VmBytecode.VMV_int i -> VmBytecode.VMV_int i
+  | _ -> failwith "Expected a float"
+  in
+  Mem.mem.VmBytecode.data.(r+1) <- to_int p1;
+  Printf.printf "RectChangeY %a\n" PrintByteCode.pp_value p1;
+  { VmBytecode.register = VmBytecode.VMV_addr r ;
+  VmBytecode.code = c ;
+  VmBytecode.stack = s ;
+  VmBytecode.env = state.VmBytecode.env }
 
-    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeW) ::c), p1::s) ->
-        Mem.mem.VmBytecode.data.(r+2) <- p1;
-        Printf.printf "RectChangeW %a\n" PrintByteCode.pp_value p1;
-        { VmBytecode.register = VmBytecode.VMV_addr r ;
-        VmBytecode.code = c ;
-        VmBytecode.stack = s ;
-        VmBytecode.env = state.VmBytecode.env }
+| ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeW) ::c), p1::s) ->
+  let to_int = function
+  | VmBytecode.VMV_float f -> VmBytecode.VMV_int (int_of_float f)
+  | VmBytecode.VMV_int i -> VmBytecode.VMV_int i
+  | _ -> failwith "Expected a float"
+  in
+  Mem.mem.VmBytecode.data.(r+2) <- to_int p1;
+  Printf.printf "RectChangeW %a\n" PrintByteCode.pp_value p1;
+  { VmBytecode.register = VmBytecode.VMV_addr r ;
+  VmBytecode.code = c ;
+  VmBytecode.stack = s ;
+  VmBytecode.env = state.VmBytecode.env }
 
-    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeH) ::c), p1::s) ->
-        Mem.mem.VmBytecode.data.(r+3) <- p1;
-        Printf.printf "RectChangeH %a\n" PrintByteCode.pp_value p1;
-        { VmBytecode.register = VmBytecode.VMV_addr r ;
-        VmBytecode.code = c ;
-        VmBytecode.stack = s ;
-        VmBytecode.env = state.VmBytecode.env }
+| ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeH) ::c), p1::s) ->
+  let to_int = function
+  | VmBytecode.VMV_float f -> VmBytecode.VMV_int (int_of_float f)
+  | VmBytecode.VMV_int i -> VmBytecode.VMV_int i
+  | _ -> failwith "Expected a float"
+  in
+  Mem.mem.VmBytecode.data.(r+3) <- to_int p1;
+  Printf.printf "RectChangeH %a\n" PrintByteCode.pp_value p1;
+  { VmBytecode.register = VmBytecode.VMV_addr r ;
+  VmBytecode.code = c ;
+  VmBytecode.stack = s ;
+  VmBytecode.env = state.VmBytecode.env }
 
-    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeC) ::c), p1::s) ->
-        Graphics.set_color blue ;
-        Printf.printf "RectChangeC %a\n" PrintByteCode.pp_value p1;
-        { VmBytecode.register = VmBytecode.VMV_addr r ;
-        VmBytecode.code = c ;
-        VmBytecode.stack = s ;
-        VmBytecode.env = state.VmBytecode.env }
+| ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_RectChangeC) ::c), p1::s) ->
+    Graphics.set_color blue ;
+    Printf.printf "RectChangeC %a\n" PrintByteCode.pp_value p1;
+    { VmBytecode.register = VmBytecode.VMV_addr r ;
+    VmBytecode.code = c ;
+    VmBytecode.stack = s ;
+    VmBytecode.env = state.VmBytecode.env }
 
-    | (VmBytecode.VMV_int r, ((VmBytecode.VMI_FPS) ::c), s) ->
+| (VmBytecode.VMV_int r, ((VmBytecode.VMI_FPS) ::c), s) ->
+  let fps = r in
+  (*Graphics.clear_graph ();*)
+  Unix.sleepf (1.0 /. float_of_int fps);
+  { VmBytecode.register = VmBytecode.VMV_int r ;
+  VmBytecode.code = c ;
+  VmBytecode.stack = s ;
+  VmBytecode.env = state.VmBytecode.env }
+
+| (r, ((VmBytecode.VMI_Background) ::c), (VmBytecode.VMV_int c1)::(VmBytecode.VMV_int c2)::(VmBytecode.VMV_int c3)::s) ->
+  let color = rgb c1 c2 c3 in
+  Graphics.set_color color;
+  Graphics.fill_rect 0 0 (Graphics.size_x ()) (Graphics.size_y ());
+  { VmBytecode.register = r ;
+  VmBytecode.code = c ;
+  VmBytecode.stack = s ;
+  VmBytecode.env = state.VmBytecode.env }
+
+| ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_Circle) ::c), s) ->
+  Graphics.set_color black;
+  let p1 = match Mem.mem.VmBytecode.data.(r) with
+    | VmBytecode.VMV_int i -> i
+    | _ -> failwith "Expected an integer" in
+  let p2 = match Mem.mem.VmBytecode.data.(r + 1) with
+    | VmBytecode.VMV_int i -> i
+    | _ -> failwith "Expected an integer" in
+  let p3 = match Mem.mem.VmBytecode.data.(r + 2) with
+    | VmBytecode.VMV_int i -> i
+    | _ -> failwith "Expected an integer" in
+  (*let p4 = match Mem.mem.VmBytecode.data.(r + 3) with
+    | VmBytecode.VMV_int i -> i
+    | _ -> failwith "Expected an integer" in*)
+    Graphics.draw_circle p1 p2 p3;
+    { VmBytecode.register = VmBytecode.VMV_addr r ;
+    VmBytecode.code = c ;
+    VmBytecode.stack = s ;
+    VmBytecode.env = state.VmBytecode.env }
+
+| ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleMove) ::c), p1::p2::p3::s) ->
+  let to_int = function
+  | VmBytecode.VMV_float f -> VmBytecode.VMV_int (int_of_float f)
+  | VmBytecode.VMV_int i -> VmBytecode.VMV_int i
+  | _ -> failwith "Expected a float test"
+  in
+  Mem.mem.VmBytecode.data.(r) <- to_int p3;
+  Mem.mem.VmBytecode.data.(r + 1) <- to_int p2;
+  Mem.mem.VmBytecode.data.(r + 2) <- to_int p1;
+  Printf.printf "CircleMove %a\n" PrintByteCode.pp_value p1;
+  { VmBytecode.register = VmBytecode.VMV_addr r ;
+  VmBytecode.code = c ;
+  VmBytecode.stack = s ;
+  VmBytecode.env = state.VmBytecode.env }
+
+| ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleChangeX) ::c), p1::s) ->
+  let to_int = function
+  | VmBytecode.VMV_float f -> VmBytecode.VMV_int (int_of_float f)
+  | VmBytecode.VMV_int i -> VmBytecode.VMV_int i
+  | _ -> failwith "Expected a float"
+  in
+  Printf.printf "CircleChangeX floattant %a\n" PrintByteCode.pp_value (to_int p1);
+  Mem.mem.VmBytecode.data.(r) <- to_int p1;
+  { VmBytecode.register = VmBytecode.VMV_addr r ;
+  VmBytecode.code = c ;
+  VmBytecode.stack = s ;
+  VmBytecode.env = state.VmBytecode.env }
+
+| ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleChangeY) ::c), p1::s) ->
+  let to_int = function
+  | VmBytecode.VMV_float f -> VmBytecode.VMV_int (int_of_float f)
+  | VmBytecode.VMV_int i -> VmBytecode.VMV_int i
+  | _ -> failwith "Expected a float"
+  in
+  Mem.mem.VmBytecode.data.(r+1) <- to_int p1;
+  Printf.printf "CircleChangeY %a\n" PrintByteCode.pp_value p1;
+  { VmBytecode.register = VmBytecode.VMV_addr r ;
+  VmBytecode.code = c ;
+  VmBytecode.stack = s ;
+  VmBytecode.env = state.VmBytecode.env }
+
+| ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleChangeR) ::c), p1::s) ->
+  let to_int = function
+  | VmBytecode.VMV_float f -> VmBytecode.VMV_int (int_of_float f)
+  | VmBytecode.VMV_int i -> VmBytecode.VMV_int i
+  | _ -> failwith "Expected a float"
+  in
+  Mem.mem.VmBytecode.data.(r+2) <- to_int p1;
+  Printf.printf "CirlceChangeR %a\n" PrintByteCode.pp_value p1;
+  { VmBytecode.register = VmBytecode.VMV_addr r ;
+  VmBytecode.code = c ;
+  VmBytecode.stack = s ;
+  VmBytecode.env = state.VmBytecode.env }
+
+
+    (*| (VmBytecode.VMV_int r, ((VmBytecode.VMI_FPS) ::c), s) ->
       let fps = r in
       (*Graphics.clear_graph ();*)
       Unix.sleepf (1.0 /. float_of_int fps);
       { VmBytecode.register = VmBytecode.VMV_int r ;
       VmBytecode.code = c ;
       VmBytecode.stack = s ;
-      VmBytecode.env = state.VmBytecode.env }
+      VmBytecode.env = state.VmBytecode.env }*)
 
-    | (r, ((VmBytecode.VMI_Background) ::c), (VmBytecode.VMV_int c1)::(VmBytecode.VMV_int c2)::(VmBytecode.VMV_int c3)::s) ->
-      let color = rgb c1 c2 c3 in
-      Graphics.set_color color;
-      Graphics.fill_rect 0 0 (Graphics.size_x ()) (Graphics.size_y ());
-      { VmBytecode.register = r ;
+  | (r, ((VmBytecode.VMI_AssignTrig n) :: c),
+  s) ->
+    (* Affectation d'une variable. Prend la valeur � affecter dans le
+        registre. *)
+  let addr =
+    try List.nth state.VmBytecode.env n with
+    | Failure msg when msg = "nth" ->
+        raise (Failure ("VMI_Read out of env : " ^ (string_of_int n)))
+    | Failure _ -> raise (Failure "Unexpected failure in VMI_Read") in
+    if addr >= Mem.mem.VmBytecode.heap_base + Mem.mem.VmBytecode.size then
+      raise (Failure "Access out of memory") ;
+    Mem.mem.VmBytecode.data.(addr) <- r ;
+    { VmBytecode.register = r ;
       VmBytecode.code = c ;
       VmBytecode.stack = s ;
       VmBytecode.env = state.VmBytecode.env }
 
-  | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_Circle) ::c), s) ->
-    Graphics.set_color black;
-    let p1 = match Mem.mem.VmBytecode.data.(r) with
-      | VmBytecode.VMV_int i -> i
-      | _ -> failwith "Expected an integer" in
-    let p2 = match Mem.mem.VmBytecode.data.(r + 1) with
-      | VmBytecode.VMV_int i -> i
-      | _ -> failwith "Expected an integer" in
-    let p3 = match Mem.mem.VmBytecode.data.(r + 2) with
-      | VmBytecode.VMV_int i -> i
-      | _ -> failwith "Expected an integer" in
-    (*let p4 = match Mem.mem.VmBytecode.data.(r + 3) with
-      | VmBytecode.VMV_int i -> i
-      | _ -> failwith "Expected an integer" in*)
-      Graphics.draw_circle p1 p2 p3;
-      { VmBytecode.register = VmBytecode.VMV_addr r ;
+  | (r, ((VmBytecode.VMI_Sin) ::c), p1::s) ->
+    let result = sin (match p1 with
+      | VmBytecode.VMV_float x -> x
+      | VmBytecode.VMV_int x -> float_of_int x
+      | _ -> failwith "Expected a float") in
+    { VmBytecode.register = VmBytecode.VMV_float result ;
+    VmBytecode.code = c ;
+    VmBytecode.stack = s ;
+    VmBytecode.env = state.VmBytecode.env }
+
+  | (r, ((VmBytecode.VMI_Cos) ::c), p1::s) ->
+    let result = cos (match p1 with
+      | VmBytecode.VMV_float x -> x
+      | VmBytecode.VMV_int x -> float_of_int x
+      | _ -> failwith "Expected a float") in
+    { VmBytecode.register = VmBytecode.VMV_float result ;
+    VmBytecode.code = c ;
+    VmBytecode.stack = s ;
+    VmBytecode.env = state.VmBytecode.env }
+
+  | ((VmBytecode.VMV_string r), ((VmBytecode.VMI_MathFunc) ::c), ((VmBytecode.VMV_int n)::s)) ->
+      let rec get_args n s =
+        if n <= 0 then [], s
+        else match s with
+        | arg::s' ->
+          let args, s'' = get_args (n-1) s' in
+          arg::args, s''
+        | [] -> failwith "Not enough arguments on stack"
+      in
+      let args, s' = get_args n s in
+      let result = match r, args with
+      | "sin", [VmBytecode.VMV_float x] -> sin x
+      | "cos", [VmBytecode.VMV_float x] -> cos x
+      | _ -> failwith "Unknown function or wrong number of arguments"
+      in
+      { VmBytecode.register = VmBytecode.VMV_float result ;
       VmBytecode.code = c ;
-      VmBytecode.stack = s ;
+      VmBytecode.stack = s' ;
       VmBytecode.env = state.VmBytecode.env }
-
-  | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleMove) ::c), p1::p2::p3::s) ->
-      Mem.mem.VmBytecode.data.(r) <- p3;
-      Mem.mem.VmBytecode.data.(r + 1) <- p2;
-      Mem.mem.VmBytecode.data.(r + 2) <- p1;
-      Printf.printf "CircleMove %a\n" PrintByteCode.pp_value p1;
-      { VmBytecode.register = VmBytecode.VMV_addr r ;
-      VmBytecode.code = c ;
-      VmBytecode.stack = s ;
-      VmBytecode.env = state.VmBytecode.env }
-
-    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleChangeX) ::c), p1::s) ->
-        Mem.mem.VmBytecode.data.(r) <- p1;
-        Printf.printf "CircleChangeX %a\n" PrintByteCode.pp_value p1;
-        { VmBytecode.register = VmBytecode.VMV_addr r ;
-        VmBytecode.code = c ;
-        VmBytecode.stack = s ;
-        VmBytecode.env = state.VmBytecode.env }
-
-    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleChangeY) ::c), p1::s) ->
-        Mem.mem.VmBytecode.data.(r+1) <- p1;
-        Printf.printf "CircleChangeY %a\n" PrintByteCode.pp_value p1;
-        { VmBytecode.register = VmBytecode.VMV_addr r ;
-        VmBytecode.code = c ;
-        VmBytecode.stack = s ;
-        VmBytecode.env = state.VmBytecode.env }
-
-    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleChangeR) ::c), p1::s) ->
-        Mem.mem.VmBytecode.data.(r+2) <- p1;
-        Printf.printf "CirlceChangeR %a\n" PrintByteCode.pp_value p1;
-        { VmBytecode.register = VmBytecode.VMV_addr r ;
-        VmBytecode.code = c ;
-        VmBytecode.stack = s ;
-        VmBytecode.env = state.VmBytecode.env }
-
-
-    | (VmBytecode.VMV_int r, ((VmBytecode.VMI_FPS) ::c), s) ->
-      let fps = r in
-      (*Graphics.clear_graph ();*)
-      Unix.sleepf (1.0 /. float_of_int fps);
-      { VmBytecode.register = VmBytecode.VMV_int r ;
-      VmBytecode.code = c ;
-      VmBytecode.stack = s ;
-      VmBytecode.env = state.VmBytecode.env }
-
 
 
   | (r, [(* Return *)], ((VmBytecode.VMV_code_addr c) :: s)) ->

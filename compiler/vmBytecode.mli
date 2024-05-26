@@ -4,6 +4,7 @@ and vm_instr =
   | VMI_Loadi of int
   | VMI_Loadb of bool
   | VMI_Loads of string
+  | VMI_Loadf of float
   | VMI_Plus | VMI_Sub
   | VMI_Mult | VMI_Div
   | VMI_Equal
@@ -42,12 +43,17 @@ and vm_instr =
   | VMI_CircleChangeY
   | VMI_FPS
   | VMI_Background
+  | VMI_Sin 
+  | VMI_Cos
+  | VMI_AssignTrig of int
+  | VMI_MathFunc
 ;;
 
 type vm_val =
   | VMV_int of int
   | VMV_bool of bool
   | VMV_string of string
+  | VMV_float of float 
   | VMV_addr of address
   | VMV_code_addr of vm_code
   | VMV_env of vm_env

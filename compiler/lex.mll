@@ -68,10 +68,12 @@
 let newline = ('\010' | '\013' | "\013\010")
 
 rule lex = parse
-    (' ' | '\t' | newline )
+  | (' ' | '\t' | newline )
       { lex lexbuf }     (* on passe les espaces *)
   | ['0'-'9']+ as lxm
       { INT(int_of_string lxm) }
+  | ['0'-'9']+ '.' ['0'-'9']* as lxm
+      { FLOAT(float_of_string lxm) }
 | [ 'A'-'Z' 'a'-'z' '.' ] [ 'A'-'Z' 'a'-'z' '_' '0'-'9']* as lxm
       { match lxm with
         | ".x" -> DOT_X
@@ -97,8 +99,13 @@ rule lex = parse
         | "win" -> WIN
         | "force" -> FORCE
         | "rect" -> RECT
+        | "urect" -> URECT
         | "circle" -> CIRCLE
+        | "ucircle" -> UCIRCLE
         | "triangle" -> TRIANGLE
+        | "sin" -> SIN
+        | "cos" -> COS
+        | "func" -> FUNC
         | "line" -> LINE
         | "fps" -> FPS
         | "background" -> BACKGROUND
