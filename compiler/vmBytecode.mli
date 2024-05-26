@@ -36,6 +36,12 @@ and vm_instr =
   | VMI_RectChangeC
   | VMI_Line
   | VMI_Circle
+  | VMI_CircleMove
+  | VMI_CircleChangeR
+  | VMI_CircleChangeX
+  | VMI_CircleChangeY
+  | VMI_FPS
+  | VMI_Background
 ;;
 
 type vm_val =

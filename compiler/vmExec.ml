@@ -1,5 +1,5 @@
 open Graphics ;;
-
+open Unix ;;
 
 
 exception Computation_success of VmBytecode.vm_val ;;
@@ -343,6 +343,7 @@ let rec next_state state =
     | VmBytecode.VMV_string s -> s
     | _ -> failwith "Expected an string" in
     Graphics.set_color p5;*)
+    Graphics.set_color black;
     let p1 = match Mem.mem.VmBytecode.data.(r) with
       | VmBytecode.VMV_int i -> i
       | _ -> failwith "Expected an integer" in
@@ -356,6 +357,7 @@ let rec next_state state =
       | VmBytecode.VMV_int i -> i
       | _ -> failwith "Expected an integer" in
       Graphics.draw_rect p1 p2 p3 p4 ;
+      Graphics.fill_rect p1 p2 p3 p4 ;
       { VmBytecode.register = VmBytecode.VMV_addr r ;
       VmBytecode.code = c ;
       VmBytecode.stack = s ;
@@ -412,6 +414,90 @@ let rec next_state state =
         VmBytecode.code = c ;
         VmBytecode.stack = s ;
         VmBytecode.env = state.VmBytecode.env }
+
+    | (VmBytecode.VMV_int r, ((VmBytecode.VMI_FPS) ::c), s) ->
+      let fps = r in
+      (*Graphics.clear_graph ();*)
+      Unix.sleepf (1.0 /. float_of_int fps);
+      { VmBytecode.register = VmBytecode.VMV_int r ;
+      VmBytecode.code = c ;
+      VmBytecode.stack = s ;
+      VmBytecode.env = state.VmBytecode.env }
+
+    | (r, ((VmBytecode.VMI_Background) ::c), (VmBytecode.VMV_int c1)::(VmBytecode.VMV_int c2)::(VmBytecode.VMV_int c3)::s) ->
+      let color = rgb c1 c2 c3 in
+      Graphics.set_color color;
+      Graphics.fill_rect 0 0 (Graphics.size_x ()) (Graphics.size_y ());
+      { VmBytecode.register = r ;
+      VmBytecode.code = c ;
+      VmBytecode.stack = s ;
+      VmBytecode.env = state.VmBytecode.env }
+
+  | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_Circle) ::c), s) ->
+    Graphics.set_color black;
+    let p1 = match Mem.mem.VmBytecode.data.(r) with
+      | VmBytecode.VMV_int i -> i
+      | _ -> failwith "Expected an integer" in
+    let p2 = match Mem.mem.VmBytecode.data.(r + 1) with
+      | VmBytecode.VMV_int i -> i
+      | _ -> failwith "Expected an integer" in
+    let p3 = match Mem.mem.VmBytecode.data.(r + 2) with
+      | VmBytecode.VMV_int i -> i
+      | _ -> failwith "Expected an integer" in
+    (*let p4 = match Mem.mem.VmBytecode.data.(r + 3) with
+      | VmBytecode.VMV_int i -> i
+      | _ -> failwith "Expected an integer" in*)
+      Graphics.draw_circle p1 p2 p3;
+      { VmBytecode.register = VmBytecode.VMV_addr r ;
+      VmBytecode.code = c ;
+      VmBytecode.stack = s ;
+      VmBytecode.env = state.VmBytecode.env }
+
+  | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleMove) ::c), p1::p2::p3::s) ->
+      Mem.mem.VmBytecode.data.(r) <- p3;
+      Mem.mem.VmBytecode.data.(r + 1) <- p2;
+      Mem.mem.VmBytecode.data.(r + 2) <- p1;
+      Printf.printf "CircleMove %a\n" PrintByteCode.pp_value p1;
+      { VmBytecode.register = VmBytecode.VMV_addr r ;
+      VmBytecode.code = c ;
+      VmBytecode.stack = s ;
+      VmBytecode.env = state.VmBytecode.env }
+
+    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleChangeX) ::c), p1::s) ->
+        Mem.mem.VmBytecode.data.(r) <- p1;
+        Printf.printf "CircleChangeX %a\n" PrintByteCode.pp_value p1;
+        { VmBytecode.register = VmBytecode.VMV_addr r ;
+        VmBytecode.code = c ;
+        VmBytecode.stack = s ;
+        VmBytecode.env = state.VmBytecode.env }
+
+    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleChangeY) ::c), p1::s) ->
+        Mem.mem.VmBytecode.data.(r+1) <- p1;
+        Printf.printf "CircleChangeY %a\n" PrintByteCode.pp_value p1;
+        { VmBytecode.register = VmBytecode.VMV_addr r ;
+        VmBytecode.code = c ;
+        VmBytecode.stack = s ;
+        VmBytecode.env = state.VmBytecode.env }
+
+    | ((VmBytecode.VMV_addr r), ((VmBytecode.VMI_CircleChangeR) ::c), p1::s) ->
+        Mem.mem.VmBytecode.data.(r+2) <- p1;
+        Printf.printf "CirlceChangeR %a\n" PrintByteCode.pp_value p1;
+        { VmBytecode.register = VmBytecode.VMV_addr r ;
+        VmBytecode.code = c ;
+        VmBytecode.stack = s ;
+        VmBytecode.env = state.VmBytecode.env }
+
+
+    | (VmBytecode.VMV_int r, ((VmBytecode.VMI_FPS) ::c), s) ->
+      let fps = r in
+      (*Graphics.clear_graph ();*)
+      Unix.sleepf (1.0 /. float_of_int fps);
+      { VmBytecode.register = VmBytecode.VMV_int r ;
+      VmBytecode.code = c ;
+      VmBytecode.stack = s ;
+      VmBytecode.env = state.VmBytecode.env }
+
+
 
   | (r, [(* Return *)], ((VmBytecode.VMV_code_addr c) :: s)) ->
       (* Return from function call, continue pending code. *)

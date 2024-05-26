@@ -30,9 +30,22 @@ type circle = {
   c_params : expr list;
 } ;;
 
+type circle_move = {
+  c_name : string ;
+  c_params : expr;
+} ;;
+
 type line = {
   l_name : string ;
   l_params : expr list;
+} ;;
+
+type fps = {
+  fps : expr;
+} ;;
+
+type colors = {
+  colors : expr list;
 } ;;
 
 type instr =
@@ -53,8 +66,16 @@ type instr =
   | RectChangeWidth of rect_move
   | RectChangeHeight of rect_move
   | RectChangeColor of rect_move
+
   | Circle of circle
+  | CircleMove of circle
+  | CircleChangeX of circle_move
+  | CircleChangeY of circle_move
+  | CircleChangeRadius of circle_move
+
   | Line of line
+  | SetFps of fps
+  | SetBackground of colors
 
 and var_decl =
   | Scalar
@@ -72,13 +93,6 @@ type fun_def = {
 
 
 type toplevel =
-  (*| While of (expr * instr)
-  | If of (expr * instr * instr)
-  | Assign of (string * expr)
-  | ArrayWrite of (string * expr * expr)
-  | Seq of (instr * instr)
-  | Return of (expr option)
-  | Iapp of (string * (expr list))*)
   | Vardecl of (string * var_decl)
   | Win of win
   | Rect of rect
@@ -88,12 +102,21 @@ type toplevel =
   | RectChangeWidth of rect_move
   | RectChangeHeight of rect_move
   | RectChangeColor of rect_move
+
   | Circle of circle
+  | CircleMove of circle
+  | CircleChangeX of circle_move
+  | CircleChangeY of circle_move
+  | CircleChangeRadius of circle_move
+
+
   | Line of line
   | Fundef of fun_def
   | Print of expr list
   | Instr of instr
   | Expr of expr
+  | SetFps of fps
+  | SetBackground of colors
 ;;
 
 type program = toplevel list ;;
@@ -151,10 +174,17 @@ let rec print_instr oc = function
   | RectChangeWidth r -> fprintf oc "RectChangeW %s (%a);\n" r.r_name print_expr r.r_params
   | RectChangeHeight r -> fprintf oc "RectChangeH %s (%a);\n" r.r_name print_expr r.r_params
   | RectChangeColor r -> fprintf oc "RectChangeC %s (%a);\n" r.r_name print_expr r.r_params
+
   | Circle c -> fprintf oc "Circle %s (%a);\n" c.c_name print_exprs c.c_params
+  | CircleMove c -> fprintf oc "CircleMove %s (%a);\n" c.c_name print_exprs c.c_params
+  | CircleChangeX c -> fprintf oc "CircleChangeX %s (%a);\n" c.c_name print_expr c.c_params
+  | CircleChangeY c -> fprintf oc "CircleChangeY %s (%a);\n" c.c_name print_expr c.c_params
+  | CircleChangeRadius c -> fprintf oc "CircleChangeR %s (%a);\n" c.c_name print_expr c.c_params
+
   | Line l -> fprintf oc "Line %s (%a);\n" l.l_name print_exprs l.l_params
+  | SetFps f -> fprintf oc "SetFps (%a);\n" print_expr f.fps
+  | SetBackground c -> fprintf oc "SetBackground (%a);\n" print_exprs c.colors
   | Vardecl decl -> print_var_decl oc decl
-  | _ -> fprintf oc "osef"
 ;;
 
 
@@ -182,8 +212,16 @@ let print_toplevel oc = function
   | RectChangeWidth r -> fprintf oc "RectChangeW %s (%a)" r.r_name print_expr r.r_params
   | RectChangeHeight r -> fprintf oc "RectChangeH %s (%a)" r.r_name print_expr r.r_params
   | RectChangeColor r -> fprintf oc "RectChangeC %s (%a)" r.r_name print_expr r.r_params
+
   | Circle c -> fprintf oc "Circle %s (%a)" c.c_name print_exprs c.c_params
+  | CircleMove c -> fprintf oc "CircleMove %s (%a);\n" c.c_name print_exprs c.c_params
+  | CircleChangeX c -> fprintf oc "CircleChangeX %s (%a);\n" c.c_name print_expr c.c_params
+  | CircleChangeY c -> fprintf oc "CircleChangeY %s (%a);\n" c.c_name print_expr c.c_params
+  | CircleChangeRadius c -> fprintf oc "CircleChangeR %s (%a);\n" c.c_name print_expr c.c_params
+
   | Line l -> fprintf oc "Line %s (%a)" l.l_name print_exprs l.l_params
+  | SetFps f -> fprintf oc "SetFps (%a)" print_expr f.fps
+  | SetBackground c -> fprintf oc "SetBackground (%a);\n" print_exprs c.colors
   | _ -> fprintf oc "Not implemented\n"
 ;;
 

@@ -5,9 +5,9 @@ CAMLYACC=$(BINDIR)ocamlyacc
 # COMPFLAGS=-w A-4-6-9 -warn-error A -g
 #COMPFLAGS=-I `ocamlfind ocamlc -package graphics`
 #COMPFLAGS= -g -I `ocamlfind query graphics`
-COMPFLAGS=-g
+COMPFLAGS=-g -I `ocamlfind ocamlc -package unix`
 COMPFLAGS_GRAPHICS=-g -I `ocamlfind ocamlc -package graphics`
-CAML_B_LFLAGS = `ocamlfind query -predicates byte -a-format graphics`
+CAML_B_LFLAGS = `ocamlfind query -predicates byte -a-format graphics, unix`
 
 TEST_FILES = arrangt.imp array.imp array0.imp array1.imp fact.imp\
 	fact_rec.imp global.imp trivial.imp trivial2.imp trivial3.imp trivial4.imp

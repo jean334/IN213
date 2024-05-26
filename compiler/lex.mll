@@ -79,6 +79,7 @@ rule lex = parse
         | ".width" -> DOT_WIDTH
         | ".height" -> DOT_HEIGHT
         | ".color" -> DOT_COLOR
+        | ".radius" -> DOT_RADIUS
         | "if" -> IF
         | "then" -> THEN
         | "else" -> ELSE
@@ -99,6 +100,10 @@ rule lex = parse
         | "circle" -> CIRCLE
         | "triangle" -> TRIANGLE
         | "line" -> LINE
+        | "fps" -> FPS
+        | "background" -> BACKGROUND
+
+
         | _ -> IDENT(lxm) }
 
   | "=="   { EQUALEQUAL }

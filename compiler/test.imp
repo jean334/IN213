@@ -1,9 +1,18 @@
 win w(1200,1200);
+background (100,100,0);
 rect r(50,50,50,50,50);
-r.x(12);
+circle c(200,200,200);
+
+circle c(200,200,10);
 var pos_x;
-pos_x := 1;
+pos_x := 10;
+
 while true do
-r.x(pos_x);
+fps(120);
+background (100,100,0);
+rect r.x(pos_x);
+rect r.y(pos_x);
+circle c.x(pos_x);
 pos_x := pos_x + 1;
 done 
+

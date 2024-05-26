@@ -276,6 +276,7 @@ let
         | ".width" -> DOT_WIDTH
         | ".height" -> DOT_HEIGHT
         | ".color" -> DOT_COLOR
+        | ".radius" -> DOT_RADIUS
         | "if" -> IF
         | "then" -> THEN
         | "else" -> ELSE
@@ -296,130 +297,134 @@ let
         | "circle" -> CIRCLE
         | "triangle" -> TRIANGLE
         | "line" -> LINE
-        | _ -> IDENT(lxm) )
-# 301 "lex.ml"
+        | "fps" -> FPS
+        | "background" -> BACKGROUND
 
-  | 3 ->
-# 104 "lex.mll"
-           ( EQUALEQUAL )
+
+        | _ -> IDENT(lxm) )
 # 306 "lex.ml"
 
-  | 4 ->
-# 105 "lex.mll"
-          ( GREATER)
+  | 3 ->
+# 109 "lex.mll"
+           ( EQUALEQUAL )
 # 311 "lex.ml"
 
-  | 5 ->
-# 105 "lex.mll"
-                            ( SMALLER )
+  | 4 ->
+# 110 "lex.mll"
+          ( GREATER)
 # 316 "lex.ml"
 
-  | 6 ->
-# 106 "lex.mll"
-          ( GREATEREQUAL)
+  | 5 ->
+# 110 "lex.mll"
+                            ( SMALLER )
 # 321 "lex.ml"
 
-  | 7 ->
-# 106 "lex.mll"
-                                  ( SMALLEREQUAL )
+  | 6 ->
+# 111 "lex.mll"
+          ( GREATEREQUAL)
 # 326 "lex.ml"
 
-  | 8 ->
-# 107 "lex.mll"
-          ( PLUS )
+  | 7 ->
+# 111 "lex.mll"
+                                  ( SMALLEREQUAL )
 # 331 "lex.ml"
 
-  | 9 ->
-# 107 "lex.mll"
-                           ( MINUS )
+  | 8 ->
+# 112 "lex.mll"
+          ( PLUS )
 # 336 "lex.ml"
 
-  | 10 ->
-# 107 "lex.mll"
-                                           ( MULT )
+  | 9 ->
+# 112 "lex.mll"
+                           ( MINUS )
 # 341 "lex.ml"
 
-  | 11 ->
-# 107 "lex.mll"
-                                                          ( DIV )
+  | 10 ->
+# 112 "lex.mll"
+                                           ( MULT )
 # 346 "lex.ml"
 
-  | 12 ->
-# 108 "lex.mll"
-          ( SEMICOLON )
+  | 11 ->
+# 112 "lex.mll"
+                                                          ( DIV )
 # 351 "lex.ml"
 
-  | 13 ->
-# 109 "lex.mll"
-          ( COMMA )
+  | 12 ->
+# 113 "lex.mll"
+          ( SEMICOLON )
 # 356 "lex.ml"
 
-  | 14 ->
-# 110 "lex.mll"
-          ( COLONEQUAL )
+  | 13 ->
+# 114 "lex.mll"
+          ( COMMA )
 # 361 "lex.ml"
 
-  | 15 ->
-# 111 "lex.mll"
-          ( LPAR )
+  | 14 ->
+# 115 "lex.mll"
+          ( COLONEQUAL )
 # 366 "lex.ml"
 
-  | 16 ->
-# 112 "lex.mll"
-          ( RPAR )
+  | 15 ->
+# 116 "lex.mll"
+          ( LPAR )
 # 371 "lex.ml"
 
-  | 17 ->
-# 113 "lex.mll"
-          ( LBRACKET )
+  | 16 ->
+# 117 "lex.mll"
+          ( RPAR )
 # 376 "lex.ml"
 
-  | 18 ->
-# 114 "lex.mll"
-          ( RBRACKET )
+  | 17 ->
+# 118 "lex.mll"
+          ( LBRACKET )
 # 381 "lex.ml"
 
-  | 19 ->
-# 115 "lex.mll"
-          ( LBRACE )
+  | 18 ->
+# 119 "lex.mll"
+          ( RBRACKET )
 # 386 "lex.ml"
 
-  | 20 ->
-# 116 "lex.mll"
-          ( RBRACE )
+  | 19 ->
+# 120 "lex.mll"
+          ( LBRACE )
 # 391 "lex.ml"
 
+  | 20 ->
+# 121 "lex.mll"
+          ( RBRACE )
+# 396 "lex.ml"
+
   | 21 ->
-# 117 "lex.mll"
+# 122 "lex.mll"
           ( reset_string_buffer();
             in_string lexbuf;
             STRING (get_stored_string()) )
-# 398 "lex.ml"
-
-  | 22 ->
-# 120 "lex.mll"
-          ( in_cpp_comment lexbuf )
 # 403 "lex.ml"
 
-  | 23 ->
-# 121 "lex.mll"
-          ( in_c_comment lexbuf )
+  | 22 ->
+# 125 "lex.mll"
+          ( in_cpp_comment lexbuf )
 # 408 "lex.ml"
 
-  | 24 ->
-# 122 "lex.mll"
-          ( EOF )
+  | 23 ->
+# 126 "lex.mll"
+          ( in_c_comment lexbuf )
 # 413 "lex.ml"
+
+  | 24 ->
+# 127 "lex.mll"
+          ( EOF )
+# 418 "lex.ml"
 
   | 25 ->
 let
-# 123 "lex.mll"
+# 128 "lex.mll"
           c
-# 419 "lex.ml"
+# 424 "lex.ml"
 = Lexing.sub_lexeme_char lexbuf lexbuf.Lexing.lex_start_pos in
-# 123 "lex.mll"
+# 128 "lex.mll"
             ( Printf.eprintf "Invalid char `%c'\n%!" c ; lex lexbuf )
-# 423 "lex.ml"
+# 428 "lex.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf;
       __ocaml_lex_lex_rec lexbuf __ocaml_lex_state
@@ -429,66 +434,66 @@ and in_string lexbuf =
 and __ocaml_lex_in_string_rec lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->
-# 127 "lex.mll"
+# 132 "lex.mll"
       ( () )
-# 435 "lex.ml"
+# 440 "lex.ml"
 
   | 1 ->
-# 129 "lex.mll"
+# 134 "lex.mll"
       ( store_string_char(char_for_backslash(Lexing.lexeme_char lexbuf 1));
         in_string lexbuf )
-# 441 "lex.ml"
+# 446 "lex.ml"
 
   | 2 ->
-# 132 "lex.mll"
+# 137 "lex.mll"
       ( store_string_char(char_for_decimal_code lexbuf 1);
         in_string lexbuf )
-# 447 "lex.ml"
+# 452 "lex.ml"
 
   | 3 ->
-# 135 "lex.mll"
+# 140 "lex.mll"
       ( store_string_char(char_for_hexadecimal_code lexbuf 2);
          in_string lexbuf )
-# 453 "lex.ml"
+# 458 "lex.ml"
 
   | 4 ->
 let
-# 137 "lex.mll"
+# 142 "lex.mll"
               chars
-# 459 "lex.ml"
+# 464 "lex.ml"
 = Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos (lexbuf.Lexing.lex_start_pos + 2) in
-# 138 "lex.mll"
+# 143 "lex.mll"
       ( skip_to_eol lexbuf; raise (Failure("Illegal escape: " ^ chars)) )
-# 463 "lex.ml"
+# 468 "lex.ml"
 
   | 5 ->
 let
-# 139 "lex.mll"
+# 144 "lex.mll"
                s
-# 469 "lex.ml"
+# 474 "lex.ml"
 = Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos lexbuf.Lexing.lex_curr_pos in
-# 140 "lex.mll"
+# 145 "lex.mll"
       ( for i = 0 to String.length s - 1 do
           store_string_char s.[i];
         done;
         in_string lexbuf
       )
-# 477 "lex.ml"
+# 482 "lex.ml"
 
   | 6 ->
-# 146 "lex.mll"
+# 151 "lex.mll"
       ( raise Eoi )
-# 482 "lex.ml"
+# 487 "lex.ml"
 
   | 7 ->
 let
-# 147 "lex.mll"
+# 152 "lex.mll"
          c
-# 488 "lex.ml"
+# 493 "lex.ml"
 = Lexing.sub_lexeme_char lexbuf lexbuf.Lexing.lex_start_pos in
-# 148 "lex.mll"
+# 153 "lex.mll"
       ( store_string_char c; in_string lexbuf )
-# 492 "lex.ml"
+# 497 "lex.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf;
       __ocaml_lex_in_string_rec lexbuf __ocaml_lex_state
@@ -498,19 +503,19 @@ and in_cpp_comment lexbuf =
 and __ocaml_lex_in_cpp_comment_rec lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->
-# 151 "lex.mll"
+# 156 "lex.mll"
          ( lex lexbuf )
-# 504 "lex.ml"
-
-  | 1 ->
-# 152 "lex.mll"
-         ( in_cpp_comment lexbuf )
 # 509 "lex.ml"
 
-  | 2 ->
-# 153 "lex.mll"
-         ( raise Eoi )
+  | 1 ->
+# 157 "lex.mll"
+         ( in_cpp_comment lexbuf )
 # 514 "lex.ml"
+
+  | 2 ->
+# 158 "lex.mll"
+         ( raise Eoi )
+# 519 "lex.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf;
       __ocaml_lex_in_cpp_comment_rec lexbuf __ocaml_lex_state
@@ -520,19 +525,19 @@ and in_c_comment lexbuf =
 and __ocaml_lex_in_c_comment_rec lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->
-# 156 "lex.mll"
+# 161 "lex.mll"
          ( lex lexbuf )
-# 526 "lex.ml"
-
-  | 1 ->
-# 157 "lex.mll"
-         ( in_c_comment lexbuf )
 # 531 "lex.ml"
 
-  | 2 ->
-# 158 "lex.mll"
-         ( raise Eoi )
+  | 1 ->
+# 162 "lex.mll"
+         ( in_c_comment lexbuf )
 # 536 "lex.ml"
+
+  | 2 ->
+# 163 "lex.mll"
+         ( raise Eoi )
+# 541 "lex.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf;
       __ocaml_lex_in_c_comment_rec lexbuf __ocaml_lex_state
@@ -542,14 +547,14 @@ and skip_to_eol lexbuf =
 and __ocaml_lex_skip_to_eol_rec lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->
-# 161 "lex.mll"
+# 166 "lex.mll"
             ( () )
-# 548 "lex.ml"
+# 553 "lex.ml"
 
   | 1 ->
-# 162 "lex.mll"
+# 167 "lex.mll"
             ( skip_to_eol lexbuf )
-# 553 "lex.ml"
+# 558 "lex.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf;
       __ocaml_lex_skip_to_eol_rec lexbuf __ocaml_lex_state

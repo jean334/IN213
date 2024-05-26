@@ -23,12 +23,15 @@ type token =
   | LINE
   | FORCE
   | WIN
+  | FPS
+  | BACKGROUND
   | COLONEQUAL
   | DOT_X
   | DOT_Y
   | DOT_WIDTH
   | DOT_HEIGHT
   | DOT_COLOR
+  | DOT_RADIUS
   | WHILE
   | DO
   | DONE

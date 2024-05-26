@@ -13,8 +13,10 @@ open Ast ;;
 %token LINE
 %token FORCE
 %token WIN
+%token FPS
+%token BACKGROUND
 %token COLONEQUAL
-%token DOT_X DOT_Y DOT_WIDTH DOT_HEIGHT DOT_COLOR
+%token DOT_X DOT_Y DOT_WIDTH DOT_HEIGHT DOT_COLOR DOT_RADIUS
 %token WHILE DO DONE BEGIN END RETURN VAR
 %token PLUS MINUS MULT DIV EQUALEQUAL GREATER SMALLER GREATEREQUAL SMALLEREQUAL
 %token LPAR RPAR SEMICOLON COMMA LBRACKET RBRACKET LBRACE RBRACE DOT
@@ -45,10 +47,16 @@ toplevel:
 | rect_change_height { RectChangeHeight $1 }
 | rect_change_color { RectChangeColor $1 }
 | circle_decl { Circle $1 }
+| circle_move { CircleMove $1 }
+| circle_change_x { CircleChangeX $1 }
+| circle_change_y { CircleChangeY $1 }
+| circle_change_radius { CircleChangeRadius $1 }
 | line_decl { Line $1 }
 | fun_def { Fundef $1 }
 | instr { Instr $1 }
 | expr SEMICOLON { Expr $1 }
+| set_fps { SetFps $1 }
+| set_background { SetBackground $1 }
 ;
 
 var_decl:
@@ -63,36 +71,62 @@ win_decl:
     { { w_name = $2 ; w_params = $4 } }
     
 rect_move:
-| IDENT LPAR exprs_list RPAR SEMICOLON
-    { { r_name = $1 ; r_params = $3 } }
+| RECT IDENT LPAR exprs_list RPAR SEMICOLON
+    { { r_name = $2 ; r_params = $4 } }
 
 rect_change_x:
-    IDENT DOT_X LPAR expr RPAR SEMICOLON
-    { { r_name = $1 ; r_params = $4 } }
+    RECT IDENT DOT_X LPAR expr RPAR SEMICOLON
+    { { r_name = $2 ; r_params = $5 } }
 
 rect_change_y:
-    IDENT DOT_Y LPAR expr RPAR SEMICOLON
-    { { r_name = $1 ; r_params = $4 } }
+    RECT IDENT DOT_Y LPAR expr RPAR SEMICOLON
+    { { r_name = $2 ; r_params = $5 } }
 
 rect_change_width:
-    IDENT DOT_WIDTH LPAR expr RPAR SEMICOLON
-    { { r_name = $1 ; r_params = $4 } }
+    RECT IDENT DOT_WIDTH LPAR expr RPAR SEMICOLON
+    { { r_name = $2 ; r_params = $5 } }
 
 rect_change_height:
-    IDENT DOT_HEIGHT LPAR expr RPAR SEMICOLON
-    { { r_name = $1 ; r_params = $4 } }
+    RECT IDENT DOT_HEIGHT LPAR expr RPAR SEMICOLON
+    { { r_name = $2 ; r_params = $5 } }
 
 rect_change_color:
-    IDENT DOT_COLOR LPAR expr RPAR SEMICOLON
-    { { r_name = $1 ; r_params = $4 } }
+    RECT IDENT DOT_COLOR LPAR expr RPAR SEMICOLON
+    { { r_name = $2 ; r_params = $5 } }
 
 circle_decl:
 | CIRCLE IDENT LPAR exprs_list RPAR SEMICOLON
     { { c_name = $2 ; c_params = $4 } }
 
+circle_move:
+| CIRCLE IDENT LPAR exprs_list RPAR SEMICOLON
+    { { c_name = $2 ; c_params = $4 } }
+
+circle_change_x:
+    CIRCLE IDENT DOT_X LPAR expr RPAR SEMICOLON
+    { { c_name = $2 ; c_params = $5 } }
+
+circle_change_y:
+    CIRCLE IDENT DOT_Y LPAR expr RPAR SEMICOLON
+    { { c_name = $2 ; c_params = $5 } }
+
+circle_change_radius:
+    CIRCLE IDENT DOT_RADIUS LPAR expr RPAR SEMICOLON
+    { { c_name = $2 ; c_params = $5 } }
+
+
+
 line_decl:
 | LINE IDENT LPAR exprs_list RPAR SEMICOLON
     { { l_name = $2 ; l_params = $4 } }
+
+set_fps:
+| FPS LPAR expr RPAR SEMICOLON
+    { { fps = $3 } }
+
+set_background:
+| BACKGROUND LPAR exprs_list RPAR SEMICOLON
+    { { colors = $3 } }
 
 exprs_list:
 | { [] }
@@ -157,8 +191,20 @@ instr:
     { RectChangeColor $1 }
 | circle_decl
     { Circle $1 }
+| circle_move
+    { CircleMove $1 }
+| circle_change_x
+    { CircleChangeX $1 }
+| circle_change_y
+    { CircleChangeY $1 }
+| circle_change_radius
+    { CircleChangeRadius $1 }
 | line_decl
     { Line $1 }
+| set_fps
+    { SetFps $1 }
+| set_background
+    { SetBackground $1 }
 | RETURN opt_expr SEMICOLON
     { Return $2 }
 | IDENT LPAR opt_exprs RPAR SEMICOLON

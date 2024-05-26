@@ -161,11 +161,41 @@ and compile_instr rho = function
          affecter est au sommet de la pile, l'adresse o� �crire juste en
        dessous. *)
       array_base_code @ e2_code @ e1_code @ [VmBytecode.VMI_Indxwrite]
-
+  
+  | Ast.RectMove r -> 
+    let (rho', rect_code) = compile_rect_move rho (r.r_name, r.r_params) in
+    rect_code
   | Ast.RectChangeX r ->
     let (rho', rect_code) = compile_rect_move_x rho (r.r_name, r.r_params) in
     rect_code
-  | _ -> raise (Failure "Not implemented test")
+  | Ast.RectChangeY r ->
+    let (rho', rect_code) = compile_rect_move_y rho (r.r_name, r.r_params) in
+    rect_code
+  | Ast.RectChangeWidth r ->
+    let (rho', rect_code) = compile_rect_move_w rho (r.r_name, r.r_params) in
+    rect_code
+  | Ast.RectChangeHeight r ->
+    let (rho', rect_code) = compile_rect_move_h rho (r.r_name, r.r_params) in
+    rect_code
+  
+  | Ast.CircleMove c -> 
+    let (rho', circle_code) = compile_circle_move rho (c.c_name, c.c_params) in
+    circle_code
+  | Ast.CircleChangeX c ->
+    let (rho', circle_code) = compile_circle_move_x rho (c.c_name, c.c_params) in
+    circle_code
+  | Ast.CircleChangeY c ->
+    let (rho', circle_code) = compile_circle_move_y rho (c.c_name, c.c_params) in
+    circle_code
+  | Ast.CircleChangeRadius c ->
+    let (rho', circle_code) = compile_circle_move_r rho (c.c_name, c.c_params) in
+    circle_code
+  | Ast.SetFps fps ->
+    let (rho', fps_code) = compile_fps rho fps.fps in
+    fps_code
+  | Ast.SetBackground color ->
+    let (rho', color_code) = compile_background rho color in
+    color_code
 
 
 and compile_var_decls rho = function
@@ -226,9 +256,9 @@ and compile_rect_move rho (r_name, params) =
     let rec compile_params = function
       | [] -> []
       | h :: t ->
-        compile_expr rho h @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Push] @ [VmBytecode.VMI_Print] @ compile_params t in
+        compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_params t in
     compile_params params in
-  (rho, r_code_params @ compile_expr rho (Ast.Ident r_name) @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_RectMove] @ [VmBytecode.VMI_Rect])
+  (rho, r_code_params @ compile_expr rho (Ast.Ident r_name) @ [VmBytecode.VMI_RectMove] @ [VmBytecode.VMI_Rect])
       
 
 
@@ -236,17 +266,17 @@ and compile_win rho (r_name, params) =
   let ptr_code =
     [VmBytecode.VMI_Loadi 1 ;
       VmBytecode.VMI_Mkblock; VmBytecode.VMI_Envext] in
-  let alloc_code = [VmBytecode.VMI_Loadi 2 ; VmBytecode.VMI_Mkblock; VmBytecode.VMI_Print] in
+  let alloc_code = [VmBytecode.VMI_Loadi 2 ; VmBytecode.VMI_Mkblock] in
   let decl_alloc_code = ptr_code @ alloc_code @ [VmBytecode.VMI_Assign 0] @ [VmBytecode.VMI_Push] in (*là dans le registre on à l'adresse*)
   let idx = 0 in
   let r_code_params =
     let rec compile_params idx = function
       | [] -> []
       | h :: t ->
-        compile_expr rho h @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Push] @ [VmBytecode.VMI_Print] @
-        [VmBytecode.VMI_Loadi (idx)] @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Indxwrite] @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Pop] @ [VmBytecode.VMI_Print] @ compile_params (idx + 1) t in
+        compile_expr rho h @ [VmBytecode.VMI_Push] @
+        [VmBytecode.VMI_Loadi (idx)] @ [VmBytecode.VMI_Indxwrite] @ [VmBytecode.VMI_Pop] @ compile_params (idx + 1) t in
     compile_params idx params in
-  (r_name::rho, decl_alloc_code @ r_code_params @ [VmBytecode.VMI_Pop]@ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_Window])
+  (r_name::rho, decl_alloc_code @ r_code_params @ [VmBytecode.VMI_Pop] @ [VmBytecode.VMI_Window])
       
 
 and compile_rect_move_x rho (r_name, param) = 
@@ -274,8 +304,62 @@ and compile_rect_move_c rho (r_name, param) =
     | h -> compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_expr rho (Ast.Ident r_name) @ [VmBytecode.VMI_RectChangeC] in
   (rho, r_code_param @ [VmBytecode.VMI_Rect])
 
+and compile_fps rho param = 
+let r_code_param = match param with
+  | h -> compile_expr rho h @ [VmBytecode.VMI_FPS] in
+(rho, r_code_param)
+
+and compile_background rho params = 
+  let r_code_params =
+    let rec compile_params = function
+      | [] -> []
+      | h :: t ->
+        compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_params t in
+    compile_params params.colors in
+  (rho, r_code_params @ [VmBytecode.VMI_Background])
+      
+
+and compile_circle rho (r_name, params) = 
+  let ptr_code =
+    [VmBytecode.VMI_Loadi 1 ;
+      VmBytecode.VMI_Mkblock; VmBytecode.VMI_Envext] in
+  let alloc_code = [VmBytecode.VMI_Loadi 3 ; VmBytecode.VMI_Mkblock] in
+  let decl_alloc_code = ptr_code @ alloc_code @ [VmBytecode.VMI_Assign 0] @ [VmBytecode.VMI_Push] in (*là dans le registre on à l'adresse*)
+  let idx = 0 in
+  let r_code_params =
+    let rec compile_params idx = function
+      | [] -> []
+      | h :: t ->
+        compile_expr rho h @ [VmBytecode.VMI_Push] @ 
+        [VmBytecode.VMI_Loadi (idx)] @ [VmBytecode.VMI_Indxwrite] @ [VmBytecode.VMI_Pop] @ compile_params (idx + 1) t in
+    compile_params idx params in
+  (r_name::rho, decl_alloc_code @ r_code_params @ [VmBytecode.VMI_Pop] @ [VmBytecode.VMI_Circle])
+      
+and compile_circle_move rho (c_name, params) = 
+  let r_code_params =
+    let rec compile_params = function
+      | [] -> []
+      | h :: t ->
+        compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_params t  @ [VmBytecode.VMI_Print] in
+    compile_params params in
+  (rho, [VmBytecode.VMI_Print] @ r_code_params @ compile_expr rho (Ast.Ident c_name) @ [VmBytecode.VMI_Print] @ [VmBytecode.VMI_CircleMove] @ [VmBytecode.VMI_Circle])
 
 
+
+and compile_circle_move_x rho (c_name, param) = 
+  let r_code_param = match param with
+    | h -> compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_expr rho (Ast.Ident c_name) @ [VmBytecode.VMI_CircleChangeX] in
+  (rho, r_code_param @ [VmBytecode.VMI_Circle])
+
+and compile_circle_move_y rho (c_name, param) = 
+  let r_code_param = match param with
+    | h -> compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_expr rho (Ast.Ident c_name) @ [VmBytecode.VMI_CircleChangeY] in
+  (rho, r_code_param @ [VmBytecode.VMI_Circle])
+
+and compile_circle_move_r rho (c_name, param) = 
+  let r_code_param = match param with
+    | h -> compile_expr rho h @ [VmBytecode.VMI_Push] @ compile_expr rho (Ast.Ident c_name) @ [VmBytecode.VMI_CircleChangeR] in
+  (rho, r_code_param @ [VmBytecode.VMI_Circle])
 
 
 and compile_toplevel rho = function
@@ -307,6 +391,7 @@ and compile_toplevel rho = function
     let (rho', rect_code) = compile_rect_move rho (r.r_name, r.r_params) in
     (rho', (TC_Global rect_code))
   | Ast.RectChangeX r ->
+    Printf.printf "rect change x\n";
     let (rho', rect_code) = compile_rect_move_x rho (r.r_name, r.r_params) in
     (rho', (TC_Global rect_code))
   | Ast.RectChangeY r ->
@@ -318,7 +403,30 @@ and compile_toplevel rho = function
   | Ast.RectChangeHeight r ->
     let (rho', rect_code) = compile_rect_move_h rho (r.r_name, r.r_params) in
     (rho', (TC_Global rect_code))
-  (*| Ast.While (e, i) -> compile_instr rho (Ast.While (e, i))*)
+  
+  | Ast.Circle c -> 
+    Printf.printf "circle\n";
+    let (rho', circle_code) = compile_circle rho (c.c_name, c.c_params) in
+    (rho', (TC_Global circle_code))
+  | Ast.CircleMove c ->
+    let (rho', circle_code) = compile_circle_move rho (c.c_name, c.c_params) in
+    (rho', (TC_Global circle_code))
+  | Ast.CircleChangeX c ->
+    let (rho', circle_code) = compile_circle_move_x rho (c.c_name, c.c_params) in
+    (rho', (TC_Global circle_code))
+  | Ast.CircleChangeY c ->
+    let (rho', circle_code) = compile_circle_move_y rho (c.c_name, c.c_params) in
+    (rho', (TC_Global circle_code))
+  | Ast.CircleChangeRadius c ->
+    let (rho', circle_code) = compile_circle_move_r rho (c.c_name, c.c_params) in
+    (rho', (TC_Global circle_code))
+  
+  | Ast.SetFps fps ->
+    let (rho', fps_code) = compile_fps rho fps.fps in
+    (rho', (TC_Global fps_code))
+  |Ast.SetBackground color ->
+    let (rho', color_code) = compile_background rho color in
+    (rho', (TC_Global color_code))
   | Ast.Instr i ->
     let i_code = compile_instr rho i in
     (rho, TC_Global i_code)

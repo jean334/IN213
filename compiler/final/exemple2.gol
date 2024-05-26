@@ -1,0 +1,33 @@
+win w(1600,1400);
+background (100,100,0);
+
+circle sun(800,700,100);
+
+circle planet1(1000,700,60);
+circle planet2(1200, 700, 40);
+var pos_x_p1;
+var pos_y_p1;
+var pos_x_p2;
+var pos_y_p2;
+
+var t;
+t := 1.0;
+while true do
+fps(60);
+
+pos_x_p1 := 800.0 + cos(t)*400.0;
+pos_y_p1 := 700.0 + sin(t)*400.0;
+pos_x_p2 := 800.0 + cos(t*0.5)*600.0;
+pos_y_p2 := 700.0 + sin(t*0.5)*600.0;
+
+background (100,100,0);
+ucircle sun(800,700,100);
+
+
+ucircle planet1(pos_x_p1, pos_y_p1, 60);
+ucircle planet2(pos_x_p2, pos_y_p2, 40);
+
+t := t+0.01;
+
+done 
+
